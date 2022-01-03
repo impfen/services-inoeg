@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"github.com/kiebitz-oss/services"
 	"github.com/kiprotect/go-helpers/forms"
+	"net/url"
 	"regexp"
 )
 
@@ -69,7 +70,11 @@ func (m *Method) Matches(path, method string) (bool, map[string]interface{}) {
 			if i == 0 {
 				continue
 			}
-			params[m.urlParams[i-1]] = group
+			decodedGroup, err := url.QueryUnescape(group)
+			if err != nil {
+				return false, nil
+			}
+			params[m.urlParams[i-1]] = decodedGroup
 		}
 		return true, params
 	}

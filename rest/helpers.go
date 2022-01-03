@@ -58,7 +58,7 @@ func ExtractRESTRequest(c *Context, methods map[string]*Method) (*Request, *Resp
 	}
 
 	for _, method := range methods {
-		if ok, pathParams := method.Matches(c.HTTP.Request.URL.Path, c.HTTP.Request.Method); ok {
+		if ok, pathParams := method.Matches(c.HTTP.Request.URL.EscapedPath(), c.HTTP.Request.Method); ok {
 			for k, v := range pathParams {
 				if _, ok := params[k]; ok {
 					return nil, c.Error(400, fmt.Sprintf("parameter '%s' supplied twice", k), nil).(*Response)

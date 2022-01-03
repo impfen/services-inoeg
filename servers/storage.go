@@ -51,12 +51,20 @@ func MakeStorage(settings *services.Settings) (*Storage, error) {
 				ReturnType: &api.ReturnType{
 					Validators: forms.IsAcknowledgeRVV,
 				},
+				REST: &api.REST{
+					Path:   "store",
+					Method: api.PUT,
+				},
 			},
 			{
 				Name:        "getSettings",
 				Description: "Retrieves encrypted settings.",
 				Form:        &forms.GetSettingsForm,
 				Handler:     storage.getSettings,
+				REST: &api.REST{
+					Path:   "store/<id>",
+					Method: api.GET,
+				},
 			},
 			{
 				Name:        "deleteSettings",
@@ -66,6 +74,10 @@ func MakeStorage(settings *services.Settings) (*Storage, error) {
 				ReturnType: &api.ReturnType{
 					Validators: forms.IsAcknowledgeRVV,
 				},
+				REST: &api.REST{
+					Path:   "store",
+					Method: api.DELETE,
+				},
 			},
 			{
 				Name:        "resetDB",
@@ -74,6 +86,10 @@ func MakeStorage(settings *services.Settings) (*Storage, error) {
 				Handler:     storage.resetDB,
 				ReturnType: &api.ReturnType{
 					Validators: forms.IsAcknowledgeRVV,
+				},
+				REST: &api.REST{
+					Path:   "db/reset",
+					Method: api.DELETE,
 				},
 			},
 		},

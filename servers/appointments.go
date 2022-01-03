@@ -94,7 +94,7 @@ func MakeAppointments(settings *services.Settings) (*Appointments, error) {
 					Validators: forms.GetAppointmentsByZipCodeRVV,
 				},
 				REST: &api.REST{
-					Path:   "appointments/zipCode/<zipCode>/<radius>",
+					Path:   "appointments/zipCode/<zipCode>/<radius>/<from>/<to>",
 					Method: api.GET,
 				},
 			},
@@ -263,7 +263,7 @@ func MakeAppointments(settings *services.Settings) (*Appointments, error) {
 					Validators: forms.CheckProviderDataRVV,
 				},
 				REST: &api.REST{
-					Path:   "providers/data",
+					Path:   "providers/data/check",
 					Method: api.POST,
 				},
 			},

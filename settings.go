@@ -127,7 +127,7 @@ type JSONRPCServerSettings struct {
 	HTTP *HTTPServerSettings `json:"http,omitempty"`
 }
 
-// Settings for the JSON-RPC server
+// Settings for the REST server
 type RESTServerSettings struct {
 	Cors *CorsSettings       `json:"cors,omitempty"`
 	HTTP *HTTPServerSettings `json:"http,omitempty"`

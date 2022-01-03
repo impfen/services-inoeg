@@ -30,6 +30,11 @@ storage:
       allowed_hosts: [ "http://localhost:8080" ]
       allowed_headers: [ "*" ]
       allowed_methods: [ "POST" ]
+  rest:
+    cors:
+      allowed_hosts: [ "http://localhost:8080" ]
+      allowed_headers: [ "*" ]
+      allowed_methods: [ "POST", "GET", "DELETE" ]
 admin:
   signing:
     keys: [ ]
@@ -51,3 +56,8 @@ appointments:
       allowed_hosts: [ "http://localhost:8080" ]
       allowed_headers: [ "*" ]
       allowed_methods: [ "POST" ]
+  rest:
+    cors:
+      allowed_hosts: [ "http://localhost:8080" ]
+      allowed_headers: [ "*" ]
+      allowed_methods: [ "POST", "GET", "DELETE" ]
