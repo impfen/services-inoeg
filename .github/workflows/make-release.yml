@@ -67,3 +67,5 @@ jobs:
             /tmp/go/bin/*/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Call workflow to tag Docker image in repository
+        uses: ./.github/workflows/deploy-image.yml@master
