@@ -91,7 +91,7 @@ func MakeAppointments(settings *services.Settings) (*Appointments, error) {
 				Form:        &forms.GetAppointmentsByZipCodeForm,
 				Handler:     appointments.getAppointmentsByZipCode,
 				ReturnType: &api.ReturnType{
-					Validators: forms.GetAppointmentsByZipCodeRVV,
+					Validators: forms.MakeGetAppointmentsByZipCodeRVV(settings.Appointments.Vaccines),
 				},
 				REST: &api.REST{
 					Path:   "appointments/zipCode/<zipCode>/<radius>/<from>/<to>",
@@ -104,7 +104,7 @@ func MakeAppointments(settings *services.Settings) (*Appointments, error) {
 				Form:        &forms.GetAppointmentForm,
 				Handler:     appointments.getAppointment,
 				ReturnType: &api.ReturnType{
-					Validators: forms.GetAppointmentRVV,
+					Validators: forms.MakeGetAppointmentRVV(settings.Appointments.Vaccines),
 				},
 				REST: &api.REST{
 					Path:   "provider/<providerID>/appointments/<id>",
@@ -221,7 +221,7 @@ func MakeAppointments(settings *services.Settings) (*Appointments, error) {
 				Form:        &forms.GetProviderAppointmentsForm,
 				Handler:     appointments.getProviderAppointments,
 				ReturnType: &api.ReturnType{
-					Validators: forms.GetProviderAppointmentsRVV,
+					Validators: forms.MakeGetProviderAppointmentsRVV(settings.Appointments.Vaccines),
 				},
 				REST: &api.REST{
 					Path:   "appointments",
@@ -231,7 +231,7 @@ func MakeAppointments(settings *services.Settings) (*Appointments, error) {
 			{
 				Name:        "publishAppointments", // authenticated (provider)
 				Description: "Publishes new or modified appointments to the system.",
-				Form:        &forms.PublishAppointmentsForm,
+				Form:        forms.MakePublishAppointmentsForm(settings.Appointments.Vaccines),
 				Handler:     appointments.publishAppointments,
 				ReturnType: &api.ReturnType{
 					Validators: forms.IsAcknowledgeRVV,

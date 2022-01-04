@@ -34,7 +34,7 @@ storage:
     cors:
       allowed_hosts: [ "http://localhost:8080" ]
       allowed_headers: [ "*" ]
-      allowed_methods: [ "POST", "GET", "DELETE" ]
+      allowed_methods: [ "GET", "POST", "PUT", "DELETE" ]
 admin:
   signing:
     keys: [ ]
@@ -44,6 +44,7 @@ admin:
 appointments:
   provider_codes_enabled: false
   user_codes_enabled: false
+  vaccines: [ "biontech", "moderna", "astrazeneca", "johnson-johnson" ]
   keys: [ ]
   http:
     bind_address: localhost:22222
@@ -60,4 +61,4 @@ appointments:
     cors:
       allowed_hosts: [ "http://localhost:8080" ]
       allowed_headers: [ "*" ]
-      allowed_methods: [ "POST", "GET", "DELETE" ]
+      allowed_methods: [ "GET", "POST", "PUT", "DELETE" ]

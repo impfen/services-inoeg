@@ -644,42 +644,51 @@ var GetProviderAppointmentsDataForm = forms.Form{
 	},
 }
 
-var PublishAppointmentsForm = forms.Form{
-	Name:   "publishAppointments",
-	Fields: SignedDataFields(&PublishAppointmentsDataForm),
+func MakePublishAppointmentsForm (vaccines []interface{}) (*forms.Form) {
+	var PublishAppointmentsForm = forms.Form{
+		Name:   "publishAppointments",
+		Fields: SignedDataFields(MakePublishAppointmentsDataForm(vaccines)),
+	}
+	return &PublishAppointmentsForm
 }
 
-var PublishAppointmentsDataForm = forms.Form{
-	Name: "publishAppointmentsData",
-	Fields: []forms.Field{
-		TimestampField,
-		{
-			Name:        "appointments",
-			Description: "The appointments to publish.",
-			Validators: []forms.Validator{
-				forms.IsList{
-					Validators: []forms.Validator{
-						forms.IsStringMap{
-							Form: &SignedAppointmentForm,
+func MakePublishAppointmentsDataForm (vaccines []interface{}) (*forms.Form) {
+	var PublishAppointmentsDataForm = forms.Form{
+		Name: "publishAppointmentsData",
+		Fields: []forms.Field{
+			TimestampField,
+			{
+				Name:        "appointments",
+				Description: "The appointments to publish.",
+				Validators: []forms.Validator{
+					forms.IsList{
+						Validators: []forms.Validator{
+							forms.IsStringMap{
+								Form: MakeSignedAppointmentForm(vaccines),
+							},
 						},
 					},
 				},
 			},
 		},
-	},
+	}
+	return &PublishAppointmentsDataForm
 }
 
-var AppointmentPropertiesForm = forms.Form{
-	Name: "appointmentProperties",
-	Fields: []forms.Field{
-		{
-			Name:        "vaccine",
-			Description: "The vaccine type used.",
-			Validators: []forms.Validator{
-				forms.IsIn{Choices: []interface{}{"biontech", "moderna", "astrazeneca", "johnson-johnson"}},
-			},
-		},
-	},
+func MakeAppointmentPropertiesForm (vaccines []interface{}) (*forms.Form) {
+  var AppointmentPropertiesForm = forms.Form{
+    Name: "appointmentProperties",
+    Fields: []forms.Field{
+      {
+        Name:        "vaccine",
+        Description: "The vaccine type used.",
+        Validators: []forms.Validator{
+          forms.IsIn{Choices: vaccines},
+        },
+      },
+    },
+  }
+  return &AppointmentPropertiesForm
 }
 
 var BookingForm = forms.Form{
@@ -706,91 +715,97 @@ var BookingForm = forms.Form{
 	},
 }
 
-var SignedAppointmentForm = forms.Form{
-	Name: "signedAppointment",
-	Fields: append(SignedDataFields(&AppointmentDataForm), []forms.Field{
-		{
-			Name:        "updatedAt",
-			Description: "Time the appointment has last been updated.",
-			Validators: []forms.Validator{
-				forms.IsOptional{}, // only for reading, not for submitting
-				forms.IsTime{
-					Format: "rfc3339",
+func MakeSignedAppointmentForm (vaccines []interface{}) (*forms.Form) {
+	var SignedAppointmentForm = forms.Form{
+		Name: "signedAppointment",
+		Fields: append(SignedDataFields(MakeAppointmentDataForm(vaccines)), []forms.Field{
+			{
+				Name:        "updatedAt",
+				Description: "Time the appointment has last been updated.",
+				Validators: []forms.Validator{
+					forms.IsOptional{}, // only for reading, not for submitting
+					forms.IsTime{
+						Format: "rfc3339",
+					},
 				},
 			},
-		},
-		{
-			Name:        "bookedSlots",
-			Description: "Booked slots associated with the appointment (visible to users).",
-			Validators: []forms.Validator{
-				forms.IsOptional{}, // only for reading, not for submitting
-				forms.IsList{
-					Validators: []forms.Validator{
-						forms.IsStringMap{
-							Form: &SlotForm,
+			{
+				Name:        "bookedSlots",
+				Description: "Booked slots associated with the appointment (visible to users).",
+				Validators: []forms.Validator{
+					forms.IsOptional{}, // only for reading, not for submitting
+					forms.IsList{
+						Validators: []forms.Validator{
+							forms.IsStringMap{
+								Form: &SlotForm,
+							},
 						},
 					},
 				},
 			},
-		},
-		{
-			Name:        "bookings",
-			Description: "Bookings associated with the appointment (only visible to providers).",
-			Validators: []forms.Validator{
-				forms.IsOptional{}, // only for reading, not for submitting
-				forms.IsList{
-					Validators: []forms.Validator{
-						forms.IsStringMap{
-							Form: &BookingForm,
+			{
+				Name:        "bookings",
+				Description: "Bookings associated with the appointment (only visible to providers).",
+				Validators: []forms.Validator{
+					forms.IsOptional{}, // only for reading, not for submitting
+					forms.IsList{
+						Validators: []forms.Validator{
+							forms.IsStringMap{
+								Form: &BookingForm,
+							},
 						},
 					},
 				},
 			},
-		},
-	}...),
+		}...),
+	}
+	return &SignedAppointmentForm
 }
 
-var AppointmentDataForm = forms.Form{
-	Name: "appointmentData",
-	Fields: []forms.Field{
-		TimestampField,
-		{
-			Name:        "duration",
-			Description: "Duration of the appointment.",
-			Validators: []forms.Validator{
-				forms.IsInteger{
-					HasMin: true,
-					HasMax: true,
-					Min:    5,
-					Max:    300,
+func MakeAppointmentDataForm (vaccines []interface{}) (*forms.Form) {
+	var AppointmentDataForm = forms.Form{
+		Name: "appointmentData",
+		Fields: []forms.Field{
+			TimestampField,
+			{
+				Name:        "duration",
+				Description: "Duration of the appointment.",
+				Validators: []forms.Validator{
+					forms.IsInteger{
+						HasMin: true,
+						HasMax: true,
+						Min:    5,
+						Max:    300,
+					},
 				},
 			},
-		},
-		{
-			Name:        "properties",
-			Description: "Properties of the appointment.",
-			Validators: []forms.Validator{
-				forms.IsStringMap{
-					Form: &AppointmentPropertiesForm,
+			{
+				Name:        "properties",
+				Description: "Properties of the appointment.",
+				Validators: []forms.Validator{
+					forms.IsStringMap{
+						Form: MakeAppointmentPropertiesForm(vaccines),
+					},
 				},
 			},
-		},
-		PublicKeyField,
-		IDField,
-		{
-			Name:        "slotData",
-			Description: "Appointment slots.",
-			Validators: []forms.Validator{
-				forms.IsList{
-					Validators: []forms.Validator{
-						forms.IsStringMap{
-							Form: &SlotForm,
+			PublicKeyField,
+			IDField,
+			{
+				Name:        "slotData",
+				Description: "Appointment slots.",
+				Validators: []forms.Validator{
+					forms.IsList{
+						Validators: []forms.Validator{
+							forms.IsStringMap{
+								Form: &SlotForm,
+							},
 						},
 					},
 				},
 			},
 		},
-	},
+	}
+	return &AppointmentDataForm
 }
 
 var SlotForm = forms.Form{

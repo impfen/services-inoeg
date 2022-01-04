@@ -24,14 +24,15 @@ import (
 	"github.com/kiebitz-oss/services/forms"
 )
 
-func SignedAppointment(data []byte) (*services.SignedAppointment, error) {
+func SignedAppointment(vaccines []interface{}, data []byte) (*services.SignedAppointment, error) {
 	var mapData map[string]interface{}
 	signedAppointment := &services.SignedAppointment{}
+	signedAppointmentForm := forms.MakeSignedAppointmentForm(vaccines)
 	if err := json.Unmarshal(data, &mapData); err != nil {
 		return nil, err
-	} else if params, err := forms.SignedAppointmentForm.Validate(mapData); err != nil {
+	} else if params, err := signedAppointmentForm.Validate(mapData); err != nil {
 		return nil, err
-	} else if err := forms.SignedAppointmentForm.Coerce(signedAppointment, params); err != nil {
+	} else if err := signedAppointmentForm.Coerce(signedAppointment, params); err != nil {
 		return nil, err
 	} else {
 		return signedAppointment, nil

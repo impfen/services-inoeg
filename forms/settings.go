@@ -408,6 +408,12 @@ var AppointmentsForm = forms.Form{
 			},
 		},
 		{
+			Name: "vaccines",
+			Validators: []forms.Validator{
+				forms.IsStringList{},
+			},
+		},
+		{
 			Name: "secret",
 			Validators: []forms.Validator{
 				forms.IsOptional{},
