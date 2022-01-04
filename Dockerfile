@@ -14,7 +14,7 @@ CMD [ "/kiebitz","run","all" ]
 #CMD ["sleep","86400"]
 
 COPY --from=builder /go/bin/kiebitz kiebitz
-
+USER 12345
 # Ports
 EXPOSE 11111
 EXPOSE 22222
