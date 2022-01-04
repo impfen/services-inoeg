@@ -24,6 +24,8 @@ Then have a look and jump to the [APIs](#apis)
 
 The Kiebitz backend services are written in Golang. Please install a recent version, preferably >=1.16.
 
+If you're running MacOS and run into the `readlink: illegal option -- f` error, you can resolve it by installing coreutils: `brew install coreutils` and linking it to your bin: `ln -s /usr/local/bin/greadlink /usr/local/bin/readlink`. Restart your terminal afterwards.
+
 By default, Kiebitz uses a Redis database to store data. Please make sure a Redis server is available. You can change the connection details in the `settings/dev/001_default.yml` settings file. The metering services (for statistics) also uses a Redis database by default and can be configured just like the main database. In addition, to generate TLS certificates (which is not always necessary) Kiebitz relies on the `openssl` CLI.
 
 ## Installation
