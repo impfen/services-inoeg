@@ -172,6 +172,16 @@ func MakeGetAppointmentsByZipCodeRVV  (vaccines []interface{}) ([]forms.Validato
 	return GetAppointmentsByZipCodeRVV
 }
 
+var GetProvidersByZipCodeRVV = []forms.Validator{
+	forms.IsList{
+		Validators: []forms.Validator{
+			forms.IsStringMap{
+				Form: &SignedProviderDataForm,
+			},
+		},
+	},
+}
+
 var ActorKeyForm = forms.Form{
 	Name:   "actorKey",
 	Fields: SignedDataFields(nil),

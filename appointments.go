@@ -294,6 +294,13 @@ type GetAppointmentsByZipCodeParams struct {
 	Aggregate bool      `json:"aggregate"`
 }
 
+// GetProvidersByZipCode
+
+type GetProvidersByZipCodeParams struct {
+	ZipFrom string `json:"zipFrom"`
+	ZipTo   string `json:"zipTo"`
+}
+
 type KeyChain struct {
 	Provider *ActorKey `json:"provider"`
 	Mediator *ActorKey `json:"mediator"`

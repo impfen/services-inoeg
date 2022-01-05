@@ -600,6 +600,32 @@ func MakeGetAppointmentsByZipCodeForm (maxTime int64) (*forms.Form) {
 	return &GetAppointmentsByZipCodeForm
 }
 
+var GetProvidersByZipCodeForm = forms.Form{
+	Name: "getProvidersByZipCode",
+	Fields: []forms.Field{
+		{
+			Name:        "zipFrom",
+			Description: "provider zip code min",
+			Validators: []forms.Validator{
+				forms.IsString{
+					MaxLength: 5,
+					MinLength: 5,
+				},
+			},
+		},
+		{
+			Name:        "zipTo",
+			Description: "provider zip code max",
+			Validators: []forms.Validator{
+				forms.IsString{
+					MaxLength: 5,
+					MinLength: 5,
+				},
+			},
+		},
+	},
+}
+
 var GetProviderAppointmentsForm = forms.Form{
 	Name:   "getProviderAppointments",
 	Fields: SignedDataFields(&GetProviderAppointmentsDataForm),
