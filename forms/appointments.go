@@ -237,6 +237,20 @@ var ProviderDataForm = forms.Form{
 				forms.IsString{},
 			},
 		},
+		{
+			Name:        "description",
+			Description: "Additional information about the provider.",
+			Validators: []forms.Validator{
+				forms.IsString{},
+			},
+		},
+		{
+			Name:        "accessible",
+			Description: "Is the location accessible.",
+			Validators: []forms.Validator{
+				forms.IsBoolean{},
+			},
+		},
 	},
 }
 

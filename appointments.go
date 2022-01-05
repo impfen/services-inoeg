@@ -341,6 +341,7 @@ type ProviderData struct {
 	City        string `json:"city"`
 	ZipCode     string `json:"zipCode"`
 	Description string `json:"description"`
+	Accessible  bool   `json:"accessible"`
 }
 
 // GetProviderAppointments
