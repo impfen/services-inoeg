@@ -88,7 +88,7 @@ func MakeAppointments(settings *services.Settings) (*Appointments, error) {
 			{
 				Name:        "getAppointmentsByZipCode", // unauthenticated
 				Description: "Returns available appointments for a given zip code area.",
-				Form:        &forms.GetAppointmentsByZipCodeForm,
+				Form:        forms.MakeGetAppointmentsByZipCodeForm(settings.Appointments.MaxTimeWindow),
 				Handler:     appointments.getAppointmentsByZipCode,
 				ReturnType: &api.ReturnType{
 					Validators: forms.MakeGetAppointmentsByZipCodeRVV(settings.Appointments.Vaccines),

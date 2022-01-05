@@ -534,67 +534,70 @@ var TokenDataForm = forms.Form{
 	},
 }
 
-var GetAppointmentsByZipCodeForm = forms.Form{
-	Name: "getAppointmentsByZipCode",
-	Fields: []forms.Field{
-		{
-			Name:        "radius",
-			Description: "The radius around the given zip code for which to show appointments.",
-			Validators: []forms.Validator{
-				forms.IsOptional{Default: 50},
-				forms.IsInteger{
-					HasMin:  true,
-					HasMax:  true,
-					Min:     5,
-					Max:     80,
-					Convert: true,
+func MakeGetAppointmentsByZipCodeForm (maxTime int64) (*forms.Form) {
+	var GetAppointmentsByZipCodeForm = forms.Form{
+		Name: "getAppointmentsByZipCode",
+		Fields: []forms.Field{
+			{
+				Name:        "radius",
+				Description: "The radius around the given zip code for which to show appointments.",
+				Validators: []forms.Validator{
+					forms.IsOptional{Default: 50},
+					forms.IsInteger{
+						HasMin:  true,
+						HasMax:  true,
+						Min:     5,
+						Max:     80,
+						Convert: true,
+					},
+				},
+			},
+			{
+				Name:        "zipCode",
+				Description: "The zip code to use as the user location.",
+				Validators: []forms.Validator{
+					forms.IsString{
+						MaxLength: 5,
+						MinLength: 5,
+					},
+				},
+			},
+			{
+				Name:        "from",
+				Description: "The earliest date of appointments to return.",
+				Validators: []forms.Validator{
+					forms.IsTime{Format: "rfc3339"},
+				},
+			},
+			{
+				Name:        "to",
+				Description: "The latest date of appointments to return.",
+				Validators: []forms.Validator{
+					forms.IsTime{Format: "rfc3339"},
+				},
+			},
+			{
+				Name:        "aggregate",
+				Description: "Whether to return aggregate data instead of actual appointments.",
+				Validators: []forms.Validator{
+					forms.IsOptional{Default: false},
+					forms.IsBoolean{},
 				},
 			},
 		},
-		{
-			Name:        "zipCode",
-			Description: "The zip code to use as the user location.",
-			Validators: []forms.Validator{
-				forms.IsString{
-					MaxLength: 5,
-					MinLength: 5,
-				},
-			},
+		Validator: func(values map[string]interface{}, errorAdder forms.ErrorAdder) error {
+			from := values["from"].(time.Time)
+			to := values["to"].(time.Time)
+			if from.After(to) {
+				return fmt.Errorf("'from' value is after 'to' value")
+			}
+			if to.Sub(from) > time.Hour * time.Duration(maxTime) {
+				return fmt.Errorf("date span exceeds %d hours", maxTime)
+			}
+			return nil
 		},
-		{
-			Name:        "from",
-			Description: "The earliest date of appointments to return.",
-			Validators: []forms.Validator{
-				forms.IsTime{Format: "rfc3339"},
-			},
-		},
-		{
-			Name:        "to",
-			Description: "The latest date of appointments to return.",
-			Validators: []forms.Validator{
-				forms.IsTime{Format: "rfc3339"},
-			},
-		},
-		{
-			Name:        "aggregate",
-			Description: "Whether to return aggregate data instead of actual appointments.",
-			Validators: []forms.Validator{
-				forms.IsOptional{Default: false},
-				forms.IsBoolean{},
-			},
-		},
-	},
-	Validator: func(values map[string]interface{}, errorAdder forms.ErrorAdder) error {
-		from := values["from"].(time.Time)
-		to := values["to"].(time.Time)
-		if from.After(to) {
-			return fmt.Errorf("'from' value is after 'to' value")
-		}
-		if to.Sub(from) > time.Hour*48 {
-			return fmt.Errorf("date span exceeds 2 days")
-		}
-		return nil
-	},
+	}
+	return &GetAppointmentsByZipCodeForm
 }
 
 var GetProviderAppointmentsForm = forms.Form{

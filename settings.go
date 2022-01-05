@@ -48,6 +48,7 @@ type AppointmentsSettings struct {
 	ResponseMaxProvider     int64                  `json:"response_max_provider"`
 	ResponseMaxAppointment  int64                  `json:"response_max_appointment"`
 	Vaccines                []interface {}         `json:"vaccines"`
+	MaxTimeWindow           int64                  `json:"max_time_window"` 
 }
 
 func (a *AppointmentsSettings) Key(name string) *crypto.Key {
