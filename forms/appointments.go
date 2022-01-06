@@ -102,6 +102,62 @@ func (f IsValidVaccine) ValidateWithContext(input interface{}, inputs map[string
 }
 
 
+type IsValidProviderTimeWindow struct {
+}
+
+func (f IsValidProviderTimeWindow) Validate(input interface{}, inputs map[string]interface{}) (interface{}, error) {
+	return nil, fmt.Errorf("cannot validate vaccine without context")
+}
+
+func (f IsValidProviderTimeWindow) ValidateWithContext(input interface{}, inputs map[string]interface{}, context map[string]interface{}) (interface{}, error) {
+	settings, ok := context["settings"].(*services.ValidateSettings)
+	if !ok {
+		return nil, fmt.Errorf("expected a 'settings' context")
+	}
+
+	timeWindow := settings.ProviderMaxTimeWindow
+
+	from := inputs["from"].(time.Time)
+	to := inputs["to"].(time.Time)
+
+	if from.After(to) {
+		return nil, fmt.Errorf("'from' value is after 'to' value")
+	}
+	if from.AddDate(0, 0, int(timeWindow)).Before(to) {
+		return nil, fmt.Errorf("date span exceeds %d days", timeWindow)
+	}
+
+	return input, nil
+}
+
+type IsValidAnonTimeWindow struct {
+}
+
+func (f IsValidAnonTimeWindow) Validate(input interface{}, inputs map[string]interface{}) (interface{}, error) {
+	return nil, fmt.Errorf("cannot validate vaccine without context")
+}
+
+func (f IsValidAnonTimeWindow) ValidateWithContext(input interface{}, inputs map[string]interface{}, context map[string]interface{}) (interface{}, error) {
+	settings, ok := context["settings"].(*services.ValidateSettings)
+	if !ok {
+		return nil, fmt.Errorf("expected a 'settings' context")
+	}
+
+	timeWindow := settings.AnonMaxTimeWindow
+
+	from := inputs["from"].(time.Time)
+	to := inputs["to"].(time.Time)
+
+	if from.After(to) {
+		return nil, fmt.Errorf("'from' value is after 'to' value")
+	}
+	if from.AddDate(0, 0, int(timeWindow)).Before(to) {
+		return nil, fmt.Errorf("date span exceeds %d days", timeWindow)
+	}
+
+	return input, nil
+}
+
 var PublicKeyValidators = []forms.Validator{
 	forms.IsBytes{
 		Encoding:  "base64",
@@ -620,6 +676,7 @@ var GetAppointmentsByZipCodeForm = forms.Form{
 			Description: "The latest date of appointments to return.",
 			Validators: []forms.Validator{
 				forms.IsTime{Format: "rfc3339"},
+				IsValidAnonTimeWindow{}, // needs to come after from and to
 			},
 		},
 		{
@@ -631,20 +688,7 @@ var GetAppointmentsByZipCodeForm = forms.Form{
 			},
 		},
 	},
-	// TODO write ValidateWithContext
-	Validator: func(values map[string]interface{}, errorAdder forms.ErrorAdder) error {
-		from := values["from"].(time.Time)
-		to := values["to"].(time.Time)
-		if from.After(to) {
-			return fmt.Errorf("'from' value is after 'to' value")
-		}
-		if to.Sub(from) > time.Hour * 50 {
-			return fmt.Errorf("date span exceeds %d hours", 50)
-		}
-		return nil
-	},
 }
-
 var GetProvidersByZipCodeForm = forms.Form{
 	Name: "getProvidersByZipCode",
 	Fields: []forms.Field{
@@ -692,6 +736,7 @@ var GetProviderAppointmentsDataForm = forms.Form{
 			Description: "The latest date of appointments to return.",
 			Validators: []forms.Validator{
 				forms.IsTime{Format: "rfc3339"},
+				IsValidProviderTimeWindow{},
 			},
 		},
 		{
@@ -702,19 +747,6 @@ var GetProviderAppointmentsDataForm = forms.Form{
 				forms.IsTime{Format: "rfc3339"},
 			},
 		},
-	},
-	Validator: func(values map[string]interface{}, errorAdder forms.ErrorAdder) error {
-		// form validator only gets called if values are valid, so we can
-		// perform a type assertion without check here
-		from := values["from"].(time.Time)
-		to := values["to"].(time.Time)
-		if from.After(to) {
-			return fmt.Errorf("'from' value is after 'to' value")
-		}
-		if to.Sub(from) > time.Hour*24*14 {
-			return fmt.Errorf("date span exceeds 14 days")
-		}
-		return nil
 	},
 }
 

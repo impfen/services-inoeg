@@ -331,7 +331,16 @@ var ValidateForm = forms.Form{
 			},
 		},
 		{
-			Name: "max_time_window",
+			Name: "anon_max_time_window",
+			Validators: []forms.Validator{
+				forms.IsInteger{
+					HasMin: true,
+					Min:    1,
+				},
+			},
+		},
+		{
+			Name: "provider_max_time_window",
 			Validators: []forms.Validator{
 				forms.IsInteger{
 					HasMin: true,

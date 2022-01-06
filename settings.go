@@ -136,8 +136,9 @@ type RESTServerSettings struct {
 
 // Settings for the appointments server validator
 type ValidateSettings struct {
-	Vaccines      []string `json:"vaccines"`
-	MaxTimeWindow int64    `json:"max_time_window"` 
+	Vaccines              []string `json:"vaccines"`
+	AnonMaxTimeWindow     int64    `json:"anon_max_time_window"` 
+	ProviderMaxTimeWindow int64    `json:"provider_max_time_window"` 
 }
 
 type HTTPServerSettings struct {
