@@ -44,10 +44,11 @@ admin:
 appointments:
   provider_codes_enabled: false
   user_codes_enabled: false
-  vaccines: [ "biontech", "moderna", "astrazeneca", "johnson-johnson" ]
-  # the maximum duration for the time window of the getAppointmentsByZipCode
-  # request in hours.
-  max_time_window: 50
+  validate:
+    vaccines: [ "biontech", "moderna", "astrazeneca", "johnson-johnson" ]
+    # the maximum duration for the time window of the getAppointmentsByZipCode
+    # request in hours.
+    max_time_window: 50
   keys: [ ]
   http:
     bind_address: localhost:22222

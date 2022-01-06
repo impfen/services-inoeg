@@ -29,7 +29,9 @@ type Method struct {
 	Handler interface{}
 }
 
-func MethodsHandler(methods map[string]*Method) (Handler, error) {
+func MethodsHandler(
+	methods map[string]*Method,
+	validateSettings *services.ValidateSettings) (Handler, error) {
 
 	// we check that all provided methods have the correct type
 	for key, method := range methods {
@@ -45,7 +47,7 @@ func MethodsHandler(methods map[string]*Method) (Handler, error) {
 		if method, ok := methods[context.Request.Method]; !ok {
 			return context.MethodNotFound().(*Response)
 		} else {
-			return services.HandleAPICall(method.Handler, method.Form, context).(*Response)
+			return services.HandleAPICall(method.Handler, method.Form, validateSettings, context).(*Response)
 		}
 	}, nil
 }

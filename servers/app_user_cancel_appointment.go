@@ -45,7 +45,7 @@ func (c *Appointments) cancelAppointment(context services.Context, params *servi
 
 		appointmentsByDate := c.backend.AppointmentsByDate(params.Data.ProviderID, date)
 
-		if signedAppointment, err := appointmentsByDate.Get(c.settings.Vaccines, params.Data.ID); err != nil {
+		if signedAppointment, err := appointmentsByDate.Get(c.settings.Validate, params.Data.ID); err != nil {
 			services.Log.Errorf("Cannot get appointment by date: %v", err)
 			return context.InternalError()
 		} else {

@@ -73,7 +73,7 @@ func (c *Appointments) publishAppointments(context services.Context, params *ser
 
 			appointmentsByDate := c.backend.AppointmentsByDate(hash, string(date))
 
-			if existingAppointment, err := appointmentsByDate.Get(c.settings.Vaccines, appointment.Data.ID); err != nil {
+			if existingAppointment, err := appointmentsByDate.Get(c.settings.Validate, appointment.Data.ID); err != nil {
 				services.Log.Error(err)
 				return context.InternalError()
 			} else if err := appointmentsByDate.Del(appointment.Data.ID); err != nil {

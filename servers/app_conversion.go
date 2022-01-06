@@ -24,13 +24,13 @@ import (
 	"github.com/kiebitz-oss/services/forms"
 )
 
-func SignedAppointment(vaccines []interface{}, data []byte) (*services.SignedAppointment, error) {
+func SignedAppointment(validateSettings *services.ValidateSettings, data []byte) (*services.SignedAppointment, error) {
 	var mapData map[string]interface{}
 	signedAppointment := &services.SignedAppointment{}
-	signedAppointmentForm := forms.MakeSignedAppointmentForm(vaccines)
+	signedAppointmentForm := &forms.SignedAppointmentForm
 	if err := json.Unmarshal(data, &mapData); err != nil {
 		return nil, err
-	} else if params, err := signedAppointmentForm.Validate(mapData); err != nil {
+	} else if params, err := signedAppointmentForm.ValidateWithContext(mapData, map[string]interface{}{"settings": validateSettings}); err != nil {
 		return nil, err
 	} else if err := signedAppointmentForm.Coerce(signedAppointment, params); err != nil {
 		return nil, err

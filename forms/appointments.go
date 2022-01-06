@@ -21,8 +21,10 @@ package forms
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/kiebitz-oss/services"
 	"github.com/kiprotect/go-helpers/forms"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -68,6 +70,37 @@ func (j JSON) Validate(value interface{}, values map[string]interface{}) (interf
 	}
 	return jsonValue, nil
 }
+
+type IsValidVaccine struct {
+}
+
+func (f IsValidVaccine) Validate(input interface{}, inputs map[string]interface{}) (interface{}, error) {
+	return nil, fmt.Errorf("cannot validate vaccine without context")
+}
+
+func (f IsValidVaccine) ValidateWithContext(input interface{}, inputs map[string]interface{}, context map[string]interface{}) (interface{}, error) {
+	settings, ok := context["settings"].(*services.ValidateSettings)
+	if !ok {
+		return nil, fmt.Errorf("expected a 'settings' context")
+	}
+	vaccines := settings.Vaccines
+
+	found := false
+	for _, v := range vaccines {
+		if input == v {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return nil, fmt.Errorf(
+			"unknown vaccines, must be one of: %s", strings.Join(vaccines, ", "))
+	}
+
+	return input, nil
+}
+
 
 var PublicKeyValidators = []forms.Validator{
 	forms.IsBytes{
@@ -548,70 +581,68 @@ var TokenDataForm = forms.Form{
 	},
 }
 
-func MakeGetAppointmentsByZipCodeForm (maxTime int64) (*forms.Form) {
-	var GetAppointmentsByZipCodeForm = forms.Form{
-		Name: "getAppointmentsByZipCode",
-		Fields: []forms.Field{
-			{
-				Name:        "radius",
-				Description: "The radius around the given zip code for which to show appointments.",
-				Validators: []forms.Validator{
-					forms.IsOptional{Default: 50},
-					forms.IsInteger{
-						HasMin:  true,
-						HasMax:  true,
-						Min:     5,
-						Max:     80,
-						Convert: true,
-					},
-				},
-			},
-			{
-				Name:        "zipCode",
-				Description: "The zip code to use as the user location.",
-				Validators: []forms.Validator{
-					forms.IsString{
-						MaxLength: 5,
-						MinLength: 5,
-					},
-				},
-			},
-			{
-				Name:        "from",
-				Description: "The earliest date of appointments to return.",
-				Validators: []forms.Validator{
-					forms.IsTime{Format: "rfc3339"},
-				},
-			},
-			{
-				Name:        "to",
-				Description: "The latest date of appointments to return.",
-				Validators: []forms.Validator{
-					forms.IsTime{Format: "rfc3339"},
-				},
-			},
-			{
-				Name:        "aggregate",
-				Description: "Whether to return aggregate data instead of actual appointments.",
-				Validators: []forms.Validator{
-					forms.IsOptional{Default: false},
-					forms.IsBoolean{},
+var GetAppointmentsByZipCodeForm = forms.Form{
+	Name: "getAppointmentsByZipCode",
+	Fields: []forms.Field{
+		{
+			Name:        "radius",
+			Description: "The radius around the given zip code for which to show appointments.",
+			Validators: []forms.Validator{
+				forms.IsOptional{Default: 50},
+				forms.IsInteger{
+					HasMin:  true,
+					HasMax:  true,
+					Min:     5,
+					Max:     80,
+					Convert: true,
 				},
 			},
 		},
-		Validator: func(values map[string]interface{}, errorAdder forms.ErrorAdder) error {
-			from := values["from"].(time.Time)
-			to := values["to"].(time.Time)
-			if from.After(to) {
-				return fmt.Errorf("'from' value is after 'to' value")
-			}
-			if to.Sub(from) > time.Hour * time.Duration(maxTime) {
-				return fmt.Errorf("date span exceeds %d hours", maxTime)
-			}
-			return nil
+		{
+			Name:        "zipCode",
+			Description: "The zip code to use as the user location.",
+			Validators: []forms.Validator{
+				forms.IsString{
+					MaxLength: 5,
+					MinLength: 5,
+				},
+			},
 		},
-	}
-	return &GetAppointmentsByZipCodeForm
+		{
+			Name:        "from",
+			Description: "The earliest date of appointments to return.",
+			Validators: []forms.Validator{
+				forms.IsTime{Format: "rfc3339"},
+			},
+		},
+		{
+			Name:        "to",
+			Description: "The latest date of appointments to return.",
+			Validators: []forms.Validator{
+				forms.IsTime{Format: "rfc3339"},
+			},
+		},
+		{
+			Name:        "aggregate",
+			Description: "Whether to return aggregate data instead of actual appointments.",
+			Validators: []forms.Validator{
+				forms.IsOptional{Default: false},
+				forms.IsBoolean{},
+			},
+		},
+	},
+	// TODO write ValidateWithContext
+	Validator: func(values map[string]interface{}, errorAdder forms.ErrorAdder) error {
+		from := values["from"].(time.Time)
+		to := values["to"].(time.Time)
+		if from.After(to) {
+			return fmt.Errorf("'from' value is after 'to' value")
+		}
+		if to.Sub(from) > time.Hour * 50 {
+			return fmt.Errorf("date span exceeds %d hours", 50)
+		}
+		return nil
+	},
 }
 
 var GetProvidersByZipCodeForm = forms.Form{
@@ -687,51 +718,43 @@ var GetProviderAppointmentsDataForm = forms.Form{
 	},
 }
 
-func MakePublishAppointmentsForm (vaccines []interface{}) (*forms.Form) {
-	var PublishAppointmentsForm = forms.Form{
-		Name:   "publishAppointments",
-		Fields: SignedDataFields(MakePublishAppointmentsDataForm(vaccines)),
-	}
-	return &PublishAppointmentsForm
+var PublishAppointmentsForm = forms.Form{
+	Name:   "publishAppointments",
+	Fields: SignedDataFields(&PublishAppointmentsDataForm),
 }
 
-func MakePublishAppointmentsDataForm (vaccines []interface{}) (*forms.Form) {
-	var PublishAppointmentsDataForm = forms.Form{
-		Name: "publishAppointmentsData",
-		Fields: []forms.Field{
-			TimestampField,
-			{
-				Name:        "appointments",
-				Description: "The appointments to publish.",
-				Validators: []forms.Validator{
-					forms.IsList{
-						Validators: []forms.Validator{
-							forms.IsStringMap{
-								Form: MakeSignedAppointmentForm(vaccines),
-							},
+var PublishAppointmentsDataForm = forms.Form{
+	Name: "publishAppointmentsData",
+	Fields: []forms.Field{
+		TimestampField,
+		{
+			Name:        "appointments",
+			Description: "The appointments to publish.",
+			Validators: []forms.Validator{
+				forms.IsList{
+					Validators: []forms.Validator{
+						forms.IsStringMap{
+							Form: &SignedAppointmentForm,
 						},
 					},
 				},
 			},
 		},
-	}
-	return &PublishAppointmentsDataForm
+	},
 }
 
-func MakeAppointmentPropertiesForm (vaccines []interface{}) (*forms.Form) {
-  var AppointmentPropertiesForm = forms.Form{
-    Name: "appointmentProperties",
-    Fields: []forms.Field{
-      {
-        Name:        "vaccine",
-        Description: "The vaccine type used.",
-        Validators: []forms.Validator{
-          forms.IsIn{Choices: vaccines},
-        },
-      },
-    },
-  }
-  return &AppointmentPropertiesForm
+var AppointmentPropertiesForm = forms.Form{
+	Name: "appointmentProperties",
+	Fields: []forms.Field{
+		{
+			Name:        "vaccine",
+			Description: "The vaccine type used.",
+			Validators: []forms.Validator{
+				forms.IsString{},
+				IsValidVaccine{},
+			},
+		},
+	},
 }
 
 var BookingForm = forms.Form{
@@ -758,97 +781,91 @@ var BookingForm = forms.Form{
 	},
 }
 
-func MakeSignedAppointmentForm (vaccines []interface{}) (*forms.Form) {
-	var SignedAppointmentForm = forms.Form{
-		Name: "signedAppointment",
-		Fields: append(SignedDataFields(MakeAppointmentDataForm(vaccines)), []forms.Field{
-			{
-				Name:        "updatedAt",
-				Description: "Time the appointment has last been updated.",
-				Validators: []forms.Validator{
-					forms.IsOptional{}, // only for reading, not for submitting
-					forms.IsTime{
-						Format: "rfc3339",
-					},
+var SignedAppointmentForm = forms.Form{
+	Name: "signedAppointment",
+	Fields: append(SignedDataFields(&AppointmentDataForm), []forms.Field{
+		{
+			Name:        "updatedAt",
+			Description: "Time the appointment has last been updated.",
+			Validators: []forms.Validator{
+				forms.IsOptional{}, // only for reading, not for submitting
+				forms.IsTime{
+					Format: "rfc3339",
 				},
 			},
-			{
-				Name:        "bookedSlots",
-				Description: "Booked slots associated with the appointment (visible to users).",
-				Validators: []forms.Validator{
-					forms.IsOptional{}, // only for reading, not for submitting
-					forms.IsList{
-						Validators: []forms.Validator{
-							forms.IsStringMap{
-								Form: &SlotForm,
-							},
-						},
-					},
-				},
-			},
-			{
-				Name:        "bookings",
-				Description: "Bookings associated with the appointment (only visible to providers).",
-				Validators: []forms.Validator{
-					forms.IsOptional{}, // only for reading, not for submitting
-					forms.IsList{
-						Validators: []forms.Validator{
-							forms.IsStringMap{
-								Form: &BookingForm,
-							},
-						},
-					},
-				},
-			},
-		}...),
-	}
-	return &SignedAppointmentForm
-}
-
-func MakeAppointmentDataForm (vaccines []interface{}) (*forms.Form) {
-	var AppointmentDataForm = forms.Form{
-		Name: "appointmentData",
-		Fields: []forms.Field{
-			TimestampField,
-			{
-				Name:        "duration",
-				Description: "Duration of the appointment.",
-				Validators: []forms.Validator{
-					forms.IsInteger{
-						HasMin: true,
-						HasMax: true,
-						Min:    5,
-						Max:    300,
-					},
-				},
-			},
-			{
-				Name:        "properties",
-				Description: "Properties of the appointment.",
-				Validators: []forms.Validator{
-					forms.IsStringMap{
-						Form: MakeAppointmentPropertiesForm(vaccines),
-					},
-				},
-			},
-			PublicKeyField,
-			IDField,
-			{
-				Name:        "slotData",
-				Description: "Appointment slots.",
-				Validators: []forms.Validator{
-					forms.IsList{
-						Validators: []forms.Validator{
-							forms.IsStringMap{
-								Form: &SlotForm,
-							},
+		},
+		{
+			Name:        "bookedSlots",
+			Description: "Booked slots associated with the appointment (visible to users).",
+			Validators: []forms.Validator{
+				forms.IsOptional{}, // only for reading, not for submitting
+				forms.IsList{
+					Validators: []forms.Validator{
+						forms.IsStringMap{
+							Form: &SlotForm,
 						},
 					},
 				},
 			},
 		},
-	}
-	return &AppointmentDataForm
+		{
+			Name:        "bookings",
+			Description: "Bookings associated with the appointment (only visible to providers).",
+			Validators: []forms.Validator{
+				forms.IsOptional{}, // only for reading, not for submitting
+				forms.IsList{
+					Validators: []forms.Validator{
+						forms.IsStringMap{
+							Form: &BookingForm,
+						},
+					},
+				},
+			},
+		},
+	}...),
+}
+
+var AppointmentDataForm = forms.Form{
+	Name: "appointmentData",
+	Fields: []forms.Field{
+		TimestampField,
+		{
+			Name:        "duration",
+			Description: "Duration of the appointment.",
+			Validators: []forms.Validator{
+				forms.IsInteger{
+					HasMin: true,
+					HasMax: true,
+					Min:    5,
+					Max:    300,
+				},
+			},
+		},
+		{
+			Name:        "properties",
+			Description: "Properties of the appointment.",
+			Validators: []forms.Validator{
+				forms.IsStringMap{
+					Form: &AppointmentPropertiesForm,
+				},
+			},
+		},
+		PublicKeyField,
+		IDField,
+		{
+			Name:        "slotData",
+			Description: "Appointment slots.",
+			Validators: []forms.Validator{
+				forms.IsList{
+					Validators: []forms.Validator{
+						forms.IsStringMap{
+							Form: &SlotForm,
+						},
+					},
+				},
+			},
+		},
+	},
 }
 
 var SlotForm = forms.Form{

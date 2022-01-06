@@ -82,7 +82,9 @@ func (m *Method) Matches(path, method string) (bool, map[string]interface{}) {
 	return false, nil
 }
 
-func MethodsHandler(methods map[string]*Method) (Handler, error) {
+func MethodsHandler(
+	methods map[string]*Method,
+	validateSettings *services.ValidateSettings) (Handler, error) {
 
 	// we check that all provided methods have the correct type
 	for key, method := range methods {
@@ -104,6 +106,6 @@ func MethodsHandler(methods map[string]*Method) (Handler, error) {
 
 		context.Request = request
 
-		return services.HandleAPICall(request.Method.Handler, request.Method.Form, context).(*Response)
+		return services.HandleAPICall(request.Method.Handler, request.Method.Form, validateSettings, context).(*Response)
 	}, nil
 }

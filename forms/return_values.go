@@ -28,13 +28,10 @@ var GetTokenRVV = []forms.Validator{
 	},
 }
 
-func MakeGetAppointmentRVV (vaccines []interface{}) ([]forms.Validator) {
-	var GetAppointmentRVV = []forms.Validator{
-		forms.IsStringMap{
-			Form: MakeSignedAppointmentForm(vaccines),
-		},
-	}
-	return GetAppointmentRVV
+var GetAppointmentRVV = []forms.Validator{
+	forms.IsStringMap{
+		Form: &SignedAppointmentForm,
+	},
 }
 
 var BookAppointmentRVV = []forms.Validator{
@@ -43,17 +40,14 @@ var BookAppointmentRVV = []forms.Validator{
 	},
 }
 
-func MakeGetProviderAppointmentsRVV (vaccines []interface{}) ([]forms.Validator) {
-	var GetProviderAppointmentsRVV = []forms.Validator{
-		forms.IsList{
-			Validators: []forms.Validator{
-				forms.IsStringMap{
-					Form: MakeSignedAppointmentForm(vaccines),
-				},
+var GetProviderAppointmentsRVV = []forms.Validator{
+	forms.IsList{
+		Validators: []forms.Validator{
+			forms.IsStringMap{
+				Form: &SignedAppointmentForm,
 			},
 		},
-	}
-	return GetProviderAppointmentsRVV
+	},
 }
 
 var CheckProviderDataRVV = []forms.Validator{
@@ -159,17 +153,14 @@ var GetKeysRVV = []forms.Validator{
 	},
 }
 
-func MakeGetAppointmentsByZipCodeRVV  (vaccines []interface{}) ([]forms.Validator) {
-	var GetAppointmentsByZipCodeRVV = []forms.Validator{
-		forms.IsList{
-			Validators: []forms.Validator{
-				forms.IsStringMap{
-					Form: MakeProviderAppointmentsForm(vaccines),
-				},
+var GetAppointmentsByZipCodeRVV = []forms.Validator{
+	forms.IsList{
+		Validators: []forms.Validator{
+			forms.IsStringMap{
+				Form: &ProviderAppointmentsForm,
 			},
 		},
-	}
-	return GetAppointmentsByZipCodeRVV
+	},
 }
 
 var GetProvidersByZipCodeRVV = []forms.Validator{
@@ -211,34 +202,31 @@ var KeyChainForm = forms.Form{
 	},
 }
 
-func MakeProviderAppointmentsForm (vaccines []interface{}) (*forms.Form) {
-	var ProviderAppointmentsForm = forms.Form{
-		Name: "providerAppointments",
-		Fields: []forms.Field{
-			{
-				Name:        "provider",
-				Description: "Signed public provider data.",
-				Validators: []forms.Validator{
-					forms.IsStringMap{
-						Form: &SignedProviderDataForm,
-					},
+var ProviderAppointmentsForm = forms.Form{
+	Name: "providerAppointments",
+	Fields: []forms.Field{
+		{
+			Name:        "provider",
+			Description: "Signed public provider data.",
+			Validators: []forms.Validator{
+				forms.IsStringMap{
+					Form: &SignedProviderDataForm,
 				},
 			},
-			{
-				Name:        "appointments",
-				Description: "Appointments offered by the provider.",
-				Validators: []forms.Validator{
-					forms.IsList{
-						Validators: []forms.Validator{
-							forms.IsStringMap{
-								Form: MakeSignedAppointmentForm(vaccines),
-							},
+		},
+		{
+			Name:        "appointments",
+			Description: "Appointments offered by the provider.",
+			Validators: []forms.Validator{
+				forms.IsList{
+					Validators: []forms.Validator{
+						forms.IsStringMap{
+							Form: &SignedAppointmentForm,
 						},
 					},
 				},
 			},
 		},
-	}
-	return &ProviderAppointmentsForm
+	},
 }
 

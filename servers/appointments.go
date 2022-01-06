@@ -88,10 +88,10 @@ func MakeAppointments(settings *services.Settings) (*Appointments, error) {
 			{
 				Name:        "getAppointmentsByZipCode", // unauthenticated
 				Description: "Returns available appointments for a given zip code area.",
-				Form:        forms.MakeGetAppointmentsByZipCodeForm(settings.Appointments.MaxTimeWindow),
+				Form:        &forms.GetAppointmentsByZipCodeForm,
 				Handler:     appointments.getAppointmentsByZipCode,
 				ReturnType: &api.ReturnType{
-					Validators: forms.MakeGetAppointmentsByZipCodeRVV(settings.Appointments.Vaccines),
+					Validators: forms.GetAppointmentsByZipCodeRVV,
 				},
 				REST: &api.REST{
 					Path:   "appointments/zipCode/<zipCode>/<radius>/<from>/<to>",
@@ -117,7 +117,7 @@ func MakeAppointments(settings *services.Settings) (*Appointments, error) {
 				Form:        &forms.GetAppointmentForm,
 				Handler:     appointments.getAppointment,
 				ReturnType: &api.ReturnType{
-					Validators: forms.MakeGetAppointmentRVV(settings.Appointments.Vaccines),
+					Validators: forms.GetAppointmentRVV,
 				},
 				REST: &api.REST{
 					Path:   "provider/<providerID>/appointments/<id>",
@@ -234,7 +234,7 @@ func MakeAppointments(settings *services.Settings) (*Appointments, error) {
 				Form:        &forms.GetProviderAppointmentsForm,
 				Handler:     appointments.getProviderAppointments,
 				ReturnType: &api.ReturnType{
-					Validators: forms.MakeGetProviderAppointmentsRVV(settings.Appointments.Vaccines),
+					Validators: forms.GetProviderAppointmentsRVV,
 				},
 				REST: &api.REST{
 					Path:   "appointments",
@@ -244,7 +244,7 @@ func MakeAppointments(settings *services.Settings) (*Appointments, error) {
 			{
 				Name:        "publishAppointments", // authenticated (provider)
 				Description: "Publishes new or modified appointments to the system.",
-				Form:        forms.MakePublishAppointmentsForm(settings.Appointments.Vaccines),
+				Form:        &forms.PublishAppointmentsForm,
 				Handler:     appointments.publishAppointments,
 				ReturnType: &api.ReturnType{
 					Validators: forms.IsAcknowledgeRVV,
@@ -311,7 +311,7 @@ func MakeAppointments(settings *services.Settings) (*Appointments, error) {
 
 	var err error
 
-	if appointments.Server, err = MakeServer("appointments", settings.Appointments.HTTP, settings.Appointments.JSONRPC, settings.Appointments.REST, api); err != nil {
+	if appointments.Server, err = MakeServer("appointments", settings.Appointments.HTTP, settings.Appointments.JSONRPC, settings.Appointments.REST, settings.Appointments.Validate, api); err != nil {
 		return nil, err
 	}
 

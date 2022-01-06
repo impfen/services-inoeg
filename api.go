@@ -59,8 +59,13 @@ func callHandler(context Context, handler, params interface{}) (Response, error)
 
 }
 
-func HandleAPICall(handler interface{}, form *forms.Form, context Context) Response {
-	if params, err := form.ValidateWithContext(context.Params(), map[string]interface{}{"context": context}); err != nil {
+func HandleAPICall(
+	handler interface{},
+	form *forms.Form,
+	validateSettings *ValidateSettings,
+	context Context) Response {
+
+	if params, err := form.ValidateWithContext(context.Params(), map[string]interface{}{"context": context, "settings": validateSettings}); err != nil {
 		return context.InvalidParams(err)
 	} else {
 		if paramsStruct, err := APIHandlerStruct(handler); err != nil {

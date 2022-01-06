@@ -36,7 +36,7 @@ func makeJSONRPCDoc(methods map[string]*jsonrpc.Method, api *API) interface{} {
 	}
 }
 
-func (c *API) ToJSONRPC() (jsonrpc.Handler, error) {
+func (c *API) ToJSONRPC(validateSettings *services.ValidateSettings) (jsonrpc.Handler, error) {
 	methods := map[string]*jsonrpc.Method{}
 	for _, endpoint := range c.Endpoints {
 		methods[endpoint.Name] = &jsonrpc.Method{
@@ -48,10 +48,10 @@ func (c *API) ToJSONRPC() (jsonrpc.Handler, error) {
 		Form:    APIDocForm,
 		Handler: makeJSONRPCDoc(methods, c),
 	}
-	return jsonrpc.MethodsHandler(methods)
+	return jsonrpc.MethodsHandler(methods, validateSettings)
 }
 
-func (c *API) ToREST() (rest.Handler, error) {
+func (c *API) ToREST(validateSettings *services.ValidateSettings) (rest.Handler, error) {
 	methods := map[string]*rest.Method{}
 	for _, endpoint := range c.Endpoints {
 		if endpoint.REST == nil {
@@ -64,5 +64,5 @@ func (c *API) ToREST() (rest.Handler, error) {
 			Handler: endpoint.Handler,
 		}
 	}
-	return rest.MethodsHandler(methods)
+	return rest.MethodsHandler(methods, validateSettings)
 }

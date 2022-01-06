@@ -47,8 +47,7 @@ type AppointmentsSettings struct {
 	ProviderCodesReuseLimit int64                  `json:"provider_codes_reuse_limit"`
 	ResponseMaxProvider     int64                  `json:"response_max_provider"`
 	ResponseMaxAppointment  int64                  `json:"response_max_appointment"`
-	Vaccines                []interface {}         `json:"vaccines"`
-	MaxTimeWindow           int64                  `json:"max_time_window"` 
+	Validate                *ValidateSettings      `json:"validate"`
 }
 
 func (a *AppointmentsSettings) Key(name string) *crypto.Key {
@@ -133,6 +132,12 @@ type JSONRPCServerSettings struct {
 type RESTServerSettings struct {
 	Cors *CorsSettings       `json:"cors,omitempty"`
 	HTTP *HTTPServerSettings `json:"http,omitempty"`
+}
+
+// Settings for the appointments server validator
+type ValidateSettings struct {
+	Vaccines      []string `json:"vaccines"`
+	MaxTimeWindow int64    `json:"max_time_window"` 
 }
 
 type HTTPServerSettings struct {

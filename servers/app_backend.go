@@ -367,11 +367,11 @@ func (a *AppointmentsByDate) Set(appointment *services.SignedAppointment) error 
 	}
 }
 
-func (a *AppointmentsByDate) Get(vaccines []interface{}, id []byte) (*services.SignedAppointment, error) {
+func (a *AppointmentsByDate) Get(validateSettings *services.ValidateSettings, id []byte) (*services.SignedAppointment, error) {
 	if appointmentData, err := a.dbs.Get(id); err != nil {
 		return nil, err
 	} else {
-		if signedAppointment, err := SignedAppointment(vaccines, appointmentData); err != nil {
+		if signedAppointment, err := SignedAppointment(validateSettings, appointmentData); err != nil {
 			return nil, err
 		} else {
 			return signedAppointment, nil
@@ -379,7 +379,7 @@ func (a *AppointmentsByDate) Get(vaccines []interface{}, id []byte) (*services.S
 	}
 }
 
-func (a *AppointmentsByDate) GetAll(vaccines []interface{}) (map[string]*services.SignedAppointment, error) {
+func (a *AppointmentsByDate) GetAll(validateSettings *services.ValidateSettings) (map[string]*services.SignedAppointment, error) {
 
 	signedAppointments := make(map[string]*services.SignedAppointment)
 
@@ -387,7 +387,7 @@ func (a *AppointmentsByDate) GetAll(vaccines []interface{}) (map[string]*service
 		return nil, err
 	} else {
 		for id, appointmentData := range allAppointments {
-			if signedAppointment, err := SignedAppointment(vaccines, appointmentData); err != nil {
+			if signedAppointment, err := SignedAppointment(validateSettings, appointmentData); err != nil {
 				return nil, err
 			} else {
 				signedAppointments[id] = signedAppointment

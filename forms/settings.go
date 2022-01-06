@@ -321,6 +321,27 @@ var KeyForm = forms.Form{
 	},
 }
 
+var ValidateForm = forms.Form{
+	Name: "validate",
+	Fields: []forms.Field{
+		{
+			Name: "vaccines",
+			Validators: []forms.Validator{
+				forms.IsStringList{},
+			},
+		},
+		{
+			Name: "max_time_window",
+			Validators: []forms.Validator{
+				forms.IsInteger{
+					HasMin: true,
+					Min:    1,
+				},
+			},
+		},
+	},
+}
+
 var AppointmentsForm = forms.Form{
 	Name: "appointments",
 	Fields: []forms.Field{
@@ -333,6 +354,14 @@ var AppointmentsForm = forms.Form{
 							Form: &KeyForm,
 						},
 					},
+				},
+			},
+		},
+		{
+			Name: "validate",
+			Validators: []forms.Validator{
+				forms.IsStringMap{
+					Form: &ValidateForm,
 				},
 			},
 		},
@@ -401,21 +430,6 @@ var AppointmentsForm = forms.Form{
 			Name: "response_max_appointment",
 			Validators: []forms.Validator{
 				forms.IsOptional{Default: 10},
-				forms.IsInteger{
-					HasMin: true,
-					Min:    1,
-				},
-			},
-		},
-		{
-			Name: "vaccines",
-			Validators: []forms.Validator{
-				forms.IsStringList{},
-			},
-		},
-		{
-			Name: "max_time_window",
-			Validators: []forms.Validator{
 				forms.IsInteger{
 					HasMin: true,
 					Min:    1,

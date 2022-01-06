@@ -124,7 +124,7 @@ func (c *Appointments) getAppointmentsByZipCode(context services.Context, params
 			}
 
 			appointmentsByDate := c.backend.AppointmentsByDate(hash, string(dateStr))
-			allAppointments, err := appointmentsByDate.GetAll(c.settings.Vaccines)
+			allAppointments, err := appointmentsByDate.GetAll(c.settings.Validate)
 
 			if err != nil {
 				services.Log.Error(err)

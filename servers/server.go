@@ -33,7 +33,13 @@ type Server struct {
 	jsonRPCServer *jsonrpc.JSONRPCServer
 }
 
-func MakeServer(name string, httpSettings *services.HTTPServerSettings, jsonRPCSettings *services.JSONRPCServerSettings, restSettings *services.RESTServerSettings, api *api.API) (*Server, error) {
+func MakeServer(
+	name string,
+	httpSettings *services.HTTPServerSettings,
+	jsonRPCSettings *services.JSONRPCServerSettings,
+	restSettings *services.RESTServerSettings,
+	validateSettings *services.ValidateSettings,
+	api *api.API) (*Server, error) {
 
 	server := &Server{}
 
@@ -49,7 +55,7 @@ func MakeServer(name string, httpSettings *services.HTTPServerSettings, jsonRPCS
 
 	if jsonRPCSettings != nil {
 		serverDefined = true
-		if jsonRPCHandler, err := api.ToJSONRPC(); err != nil {
+		if jsonRPCHandler, err := api.ToJSONRPC(validateSettings); err != nil {
 			return nil, err
 		} else if jsonRPCServer, err := jsonrpc.MakeJSONRPCServer(jsonRPCSettings, jsonRPCHandler, name, httpServer); err != nil {
 			return nil, err
@@ -60,7 +66,7 @@ func MakeServer(name string, httpSettings *services.HTTPServerSettings, jsonRPCS
 
 	if restSettings != nil {
 		serverDefined = true
-		if restHandler, err := api.ToREST(); err != nil {
+		if restHandler, err := api.ToREST(validateSettings); err != nil {
 			return nil, err
 		} else if restServer, err := rest.MakeRESTServer(restSettings, restHandler, name, httpServer); err != nil {
 			return nil, err

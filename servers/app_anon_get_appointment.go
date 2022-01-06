@@ -77,7 +77,7 @@ func (c *Appointments) getAppointment(context services.Context, params *services
 
 		appointmentsByDate := c.backend.AppointmentsByDate(params.ProviderID, date)
 
-		if signedAppointment, err := appointmentsByDate.Get(c.settings.Vaccines, params.ID); err != nil {
+		if signedAppointment, err := appointmentsByDate.Get(c.settings.Validate, params.ID); err != nil {
 			if err == databases.NotFound {
 				return context.NotFound()
 			}

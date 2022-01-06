@@ -97,7 +97,7 @@ func MakeStorage(settings *services.Settings) (*Storage, error) {
 
 	var err error
 
-	if storage.Server, err = MakeServer("storage", settings.Storage.HTTP, settings.Storage.JSONRPC, settings.Storage.REST, api); err != nil {
+	if storage.Server, err = MakeServer("storage", settings.Storage.HTTP, settings.Storage.JSONRPC, settings.Storage.REST, settings.Appointments.Validate, api); err != nil {
 		return nil, err
 	}
 
