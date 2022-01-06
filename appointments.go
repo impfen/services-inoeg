@@ -182,9 +182,12 @@ type Distance struct {
 	Distance float64 `json:"distance"`
 }
 
-// Keys
-
+// getKeys
 type GetKeysParams struct {
+}
+
+// getConfigurables
+type GetConfigurablesParams struct {
 }
 
 type Keys struct {

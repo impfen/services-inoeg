@@ -86,6 +86,19 @@ func MakeAppointments(settings *services.Settings) (*Appointments, error) {
 				},
 			},
 			{
+				Name:        "getConfigurables", // unauthenticated
+				Description: "returns configuration variables regarding filters",
+				Form:        &forms.GetConfigurablesForm,
+				Handler:     appointments.getConfigurables,
+				ReturnType: &api.ReturnType{
+					Validators: forms.GetConfigurablesRVV,
+				},
+				REST: &api.REST{
+					Path:   "configurables",
+					Method: api.GET,
+				},
+			},
+			{
 				Name:        "getAppointmentsByZipCode", // unauthenticated
 				Description: "Returns available appointments for a given zip code area.",
 				Form:        &forms.GetAppointmentsByZipCodeForm,

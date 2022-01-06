@@ -559,6 +559,11 @@ var GetKeysForm = forms.Form{
 	Fields: []forms.Field{},
 }
 
+var GetConfigurablesForm = forms.Form{
+	Name:   "getConfigurables",
+	Fields: []forms.Field{},
+}
+
 var GetTokenForm = forms.Form{
 	Name: "getToken",
 	Fields: []forms.Field{

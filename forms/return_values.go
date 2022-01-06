@@ -153,6 +153,12 @@ var GetKeysRVV = []forms.Validator{
 	},
 }
 
+var GetConfigurablesRVV = []forms.Validator{
+	forms.IsStringMap{
+		Form: &ValidateForm,
+	},
+}
+
 var GetAppointmentsByZipCodeRVV = []forms.Validator{
 	forms.IsList{
 		Validators: []forms.Validator{
