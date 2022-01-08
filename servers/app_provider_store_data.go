@@ -72,9 +72,12 @@ func (c *Appointments) storeProviderData(context services.Context, params *servi
 		}
 	}
 
-	if err := providerData.Set(hash, &services.RawProviderData{
+	rawProviderData := &services.RawProviderData{
+		ID: hash,
 		EncryptedData: params.Data.EncryptedData,
-	}); err != nil {
+	}
+
+	if err := providerData.Set(hash, rawProviderData); err != nil {
 		services.Log.Error(err)
 		return context.InternalError()
 	}
@@ -100,5 +103,5 @@ func (c *Appointments) storeProviderData(context services.Context, params *servi
 		}
 	}
 
-	return context.Acknowledge()
+	return context.Result(rawProviderData)
 }

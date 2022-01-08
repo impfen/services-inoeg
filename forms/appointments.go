@@ -248,6 +248,7 @@ var ConfirmProviderForm = forms.Form{
 var RawProviderDataForm = forms.Form{
 	Name: "rawProviderData",
 	Fields: []forms.Field{
+		IDField,
 		{
 			Name:        "encryptedData",
 			Description: "Encrypted data submitted by the provider.",

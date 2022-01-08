@@ -273,7 +273,7 @@ func MakeAppointments(settings *services.Settings) (*Appointments, error) {
 				Form:        &forms.StoreProviderDataForm,
 				Handler:     appointments.storeProviderData,
 				ReturnType: &api.ReturnType{
-					Validators: forms.IsAcknowledgeRVV,
+					Validators: forms.GetProviderDataRVV,
 				},
 				REST: &api.REST{
 					Path:   "providers/data",

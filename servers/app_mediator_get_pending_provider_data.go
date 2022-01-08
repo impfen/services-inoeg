@@ -48,8 +48,7 @@ func (c *Appointments) getPendingProviderData(context services.Context, params *
 
 	pdEntries := []*services.RawProviderData{}
 
-	for id, pd := range providerDataMap {
-		pd.ID = []byte(id)
+	for _, pd := range providerDataMap {
 		pdEntries = append(pdEntries, pd)
 	}
 
