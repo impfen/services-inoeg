@@ -466,14 +466,14 @@ func (c *Appointments) isValidActorSignature(context services.Context, data, sig
 	}
 
 	if actorKey == nil {
-		return context.Error(403, "not authorized", nil), nil
+		return context.Error(401, "not authorized", nil), nil
 	}
 
 	if ok, err := crypto.VerifyWithBytes(data, signature, publicKey); err != nil {
 		services.Log.Error(err)
 		return context.InternalError(), nil
 	} else if !ok {
-		return context.Error(401, "invalid signature", nil), nil
+		return context.Error(403, "invalid signature", nil), nil
 	}
 
 	return nil, actorKey
