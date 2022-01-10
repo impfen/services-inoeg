@@ -103,5 +103,5 @@ func (c *Appointments) storeProviderData(context services.Context, params *servi
 		}
 	}
 
-	return context.Result(rawProviderData)
+	return context.Acknowledge()
 }
