@@ -41,12 +41,8 @@ var BookAppointmentRVV = []forms.Validator{
 }
 
 var GetProviderAppointmentsRVV = []forms.Validator{
-	forms.IsList{
-		Validators: []forms.Validator{
-			forms.IsStringMap{
-				Form: &SignedAppointmentForm,
-			},
-		},
+	forms.IsStringMap{
+		Form: &ProviderAppointmentsForm,
 	},
 }
 

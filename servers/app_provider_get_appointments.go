@@ -89,5 +89,19 @@ func (c *Appointments) getProviderAppointments(context services.Context, params 
 		}
 	}
 
-	return context.Result(signedAppointments)
+	// public provider data structure
+	publicProviderData := c.backend.PublicProviderData()
+	providerData, err := publicProviderData.Get(hash)
+	if err != nil {
+		services.Log.Error(err)
+		return context.InternalError()
+	}
+	providerData.ID = hash
+
+	providerAppointments := &services.ProviderAppointments{
+		Provider:     providerData,
+		Appointments: signedAppointments,
+	}
+
+	return context.Result(providerAppointments)
 }
