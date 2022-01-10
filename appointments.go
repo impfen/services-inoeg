@@ -315,6 +315,11 @@ type ProviderAppointments struct {
 	KeyChain     *KeyChain            `json:"keyChain"`
 }
 
+type AggregatedProviderAppointments struct {
+	Provider     *ProviderData            `json:"provider"`
+	Appointments []*AppointmentAggregated `json:"appointments"`
+}
+
 type SignedProviderData struct {
 	JSON      string        `json:"data" coerce:"name:json"`
 	Data      *ProviderData `json:"-" coerce:"name:data"`
@@ -339,6 +344,7 @@ func (k *ProviderData) Sign(key *crypto.Key) (*SignedProviderData, error) {
 }
 
 type ProviderData struct {
+	ID          []byte `json:"id, omitempty"`
 	Name        string `json:"name"`
 	Street      string `json:"street"`
 	City        string `json:"city"`
@@ -417,6 +423,14 @@ type Appointment struct {
 	SlotData   []*Slot                `json:"slotData"`
 	ID         []byte                 `json:"id"`
 	PublicKey  []byte                 `json:"publicKey"`
+}
+
+type AppointmentAggregated struct {
+	ID         []byte                 `json:"id"`
+	Duration   int64                  `json:"duration"`
+	Properties map[string]interface{} `json:"properties"`
+	SlotN      int                    `json:"slotN"`
+	Timestamp  time.Time              `json:"timestamp"`
 }
 
 func (k *Appointment) Sign(key *crypto.Key) (*SignedAppointment, error) {

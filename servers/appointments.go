@@ -99,6 +99,19 @@ func MakeAppointments(settings *services.Settings) (*Appointments, error) {
 				},
 			},
 			{
+				Name:        "getAppointmentsAggregated", // unauthenticated
+				Description: "Returns available appointments for a given zip code area.",
+				Form:        &forms.GetAppointmentsAggregatedForm,
+				Handler:     appointments.getAppointmentsAggregated,
+				ReturnType: &api.ReturnType{
+					Validators: forms.GetAppointmentsAggregatedRVV,
+				},
+				REST: &api.REST{
+					Path:   "appointments/aggregated/<zipCode>/<radius>/<from>/<to>",
+					Method: api.GET,
+				},
+			},
+			{
 				Name:        "getAppointmentsByZipCode", // unauthenticated
 				Description: "Returns available appointments for a given zip code area.",
 				Form:        &forms.GetAppointmentsByZipCodeForm,

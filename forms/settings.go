@@ -340,6 +340,15 @@ var ValidateForm = forms.Form{
 			},
 		},
 		{
+			Name: "anon_aggregated_max_time_window",
+			Validators: []forms.Validator{
+				forms.IsInteger{
+					HasMin: true,
+					Min:    1,
+				},
+			},
+		},
+		{
 			Name: "provider_max_time_window",
 			Validators: []forms.Validator{
 				forms.IsInteger{
@@ -439,6 +448,26 @@ var AppointmentsForm = forms.Form{
 			Name: "response_max_appointment",
 			Validators: []forms.Validator{
 				forms.IsOptional{Default: 10},
+				forms.IsInteger{
+					HasMin: true,
+					Min:    1,
+				},
+			},
+		},
+		{
+			Name: "aggregated_max_provider",
+			Validators: []forms.Validator{
+				forms.IsOptional{Default: 100},
+				forms.IsInteger{
+					HasMin: true,
+					Min:    1,
+				},
+			},
+		},
+		{
+			Name: "aggregated_max_appointment",
+			Validators: []forms.Validator{
+				forms.IsOptional{Default: 1000},
 				forms.IsInteger{
 					HasMin: true,
 					Min:    1,

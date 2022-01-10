@@ -157,6 +157,33 @@ func (f IsValidAnonTimeWindow) ValidateWithContext(input interface{}, inputs map
 
 	return input, nil
 }
+type IsValidAnonAggregatedTimeWindow struct {
+}
+
+func (f IsValidAnonAggregatedTimeWindow) Validate(input interface{}, inputs map[string]interface{}) (interface{}, error) {
+	return nil, fmt.Errorf("cannot validate vaccine without context")
+}
+
+func (f IsValidAnonAggregatedTimeWindow) ValidateWithContext(input interface{}, inputs map[string]interface{}, context map[string]interface{}) (interface{}, error) {
+	settings, ok := context["settings"].(*services.ValidateSettings)
+	if !ok {
+		return nil, fmt.Errorf("expected a 'settings' context")
+	}
+
+	timeWindow := settings.AnonAggregatedMaxTimeWindow
+
+	from := inputs["from"].(time.Time)
+	to := inputs["to"].(time.Time)
+
+	if from.After(to) {
+		return nil, fmt.Errorf("'from' value is after 'to' value")
+	}
+	if from.AddDate(0, 0, int(timeWindow)).Before(to) {
+		return nil, fmt.Errorf("date span exceeds %d days", timeWindow)
+	}
+
+	return input, nil
+}
 
 var PublicKeyValidators = []forms.Validator{
 	forms.IsBytes{
@@ -643,6 +670,51 @@ var TokenDataForm = forms.Form{
 	},
 }
 
+var GetAppointmentsAggregatedForm = forms.Form{
+	Name: "getAppointmentsByZipCode",
+	Fields: []forms.Field{
+		{
+			Name:        "radius",
+			Description: "The radius around the given zip code for which to show appointments.",
+			Validators: []forms.Validator{
+				forms.IsOptional{Default: 50},
+				forms.IsInteger{
+					HasMin:  true,
+					HasMax:  true,
+					Min:     5,
+					Max:     80,
+					Convert: true,
+				},
+			},
+		},
+		{
+			Name:        "zipCode",
+			Description: "The zip code to use as the user location.",
+			Validators: []forms.Validator{
+				forms.IsString{
+					MaxLength: 5,
+					MinLength: 5,
+				},
+			},
+		},
+		{
+			Name:        "from",
+			Description: "The earliest date of appointments to return.",
+			Validators: []forms.Validator{
+				forms.IsTime{Format: "rfc3339"},
+			},
+		},
+		{
+			Name:        "to",
+			Description: "The latest date of appointments to return.",
+			Validators: []forms.Validator{
+				forms.IsTime{Format: "rfc3339"},
+				IsValidAnonAggregatedTimeWindow{}, // needs to come after from and to
+			},
+		},
+	},
+}
+
 var GetAppointmentsByZipCodeForm = forms.Form{
 	Name: "getAppointmentsByZipCode",
 	Fields: []forms.Field{
@@ -685,16 +757,9 @@ var GetAppointmentsByZipCodeForm = forms.Form{
 				IsValidAnonTimeWindow{}, // needs to come after from and to
 			},
 		},
-		{
-			Name:        "aggregate",
-			Description: "Whether to return aggregate data instead of actual appointments.",
-			Validators: []forms.Validator{
-				forms.IsOptional{Default: false},
-				forms.IsBoolean{},
-			},
-		},
 	},
 }
+
 var GetProvidersByZipCodeForm = forms.Form{
 	Name: "getProvidersByZipCode",
 	Fields: []forms.Field{

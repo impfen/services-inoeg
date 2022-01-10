@@ -155,6 +155,16 @@ var GetConfigurablesRVV = []forms.Validator{
 	},
 }
 
+var GetAppointmentsAggregatedRVV = []forms.Validator{
+	forms.IsList{
+		Validators: []forms.Validator{
+			forms.IsStringMap{
+				Form: &AggregatedProviderAppointmentsForm,
+			},
+		},
+	},
+}
+
 var GetAppointmentsByZipCodeRVV = []forms.Validator{
 	forms.IsList{
 		Validators: []forms.Validator{
@@ -204,6 +214,33 @@ var KeyChainForm = forms.Form{
 	},
 }
 
+var AggregatedProviderAppointmentsForm = forms.Form{
+	Name: "providerAppointments",
+	Fields: []forms.Field{
+		{
+			Name:        "provider",
+			Description: "Signed public provider data.",
+			Validators: []forms.Validator{
+				forms.IsStringMap{
+					Form: &ProviderDataForm,
+				},
+			},
+		},
+		{
+			Name:        "appointments",
+			Description: "Appointments offered by the provider.",
+			Validators: []forms.Validator{
+				forms.IsList{
+					Validators: []forms.Validator{
+						forms.IsStringMap{
+							Form: &AppointmentDataForm,
+						},
+					},
+				},
+			},
+		},
+	},
+}
 var ProviderAppointmentsForm = forms.Form{
 	Name: "providerAppointments",
 	Fields: []forms.Field{
