@@ -319,10 +319,11 @@ func (a *AppointmentDatesByID) Get(id []byte) (string, error) {
 
 func (a *AppointmentDatesByID) Set(id []byte, date string) error {
 	// ID map will auto-delete after one year (purely for storage reasons, it does not contain sensitive data)
+	setErr := a.dbs.Set(id, []byte(date))
 	if err := a.db.Expire("appointmentDatesByID", a.providerID, time.Hour*24*365); err != nil {
 		return err
 	}
-	return a.dbs.Set(id, []byte(date))
+	return setErr
 }
 
 func (a *AppointmentDatesByID) Del(id []byte) error {
