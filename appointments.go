@@ -294,7 +294,6 @@ type GetAppointmentsByZipCodeParams struct {
 	ZipCode   string    `json:"zipCode"`
 	From      time.Time `json:"from"`
 	To        time.Time `json:"to"`
-	Aggregate bool      `json:"aggregate"`
 }
 
 // GetProvidersByZipCode
