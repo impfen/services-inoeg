@@ -18,7 +18,7 @@ metrics:
   bind_address: "localhost:9091"
 storage:
   keys: [ ]
-  settings_ttl_days: 60
+  settings_ttl_days: 30
   http:
     bind_address: localhost:11111
     #tls:
