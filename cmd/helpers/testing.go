@@ -80,7 +80,7 @@ func benchmark(settings *services.Settings) func(c *cli.Context) error {
 					Start:    af.TS("2022-10-01T12:00:00Z"),
 					Duration: 30,
 					Slots:    int64(slots),
-					Properties: map[string]interface{}{
+					Properties: map[string]string{
 						"vaccine": "moderna",
 					},
 				},

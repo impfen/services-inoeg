@@ -38,7 +38,7 @@ type Appointments struct {
 	Duration   int64
 	N          int64
 	Slots      int64
-	Properties map[string]interface{}
+	Properties map[string]string
 }
 
 func (c Appointments) Setup(fixtures map[string]interface{}) (interface{}, error) {
