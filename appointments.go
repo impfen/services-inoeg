@@ -416,12 +416,12 @@ func MakeAppointment(timestamp time.Time, slots, duration int64) (*Appointment, 
 }
 
 type Appointment struct {
-	Timestamp  time.Time              `json:"timestamp"`
-	Duration   int64                  `json:"duration"`
+	Timestamp  time.Time         `json:"timestamp"`
+	Duration   int64             `json:"duration"`
 	Properties map[string]string `json:"properties"`
-	SlotData   []*Slot                `json:"slotData"`
-	ID         []byte                 `json:"id"`
-	PublicKey  []byte                 `json:"publicKey"`
+	SlotData   []*Slot           `json:"slotData"`
+	ID         []byte            `json:"id"`
+	PublicKey  []byte            `json:"publicKey"`
 }
 
 type AppointmentAggregated struct {

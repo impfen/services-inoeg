@@ -106,7 +106,7 @@ type IsValidProviderTimeWindow struct {
 }
 
 func (f IsValidProviderTimeWindow) Validate(input interface{}, inputs map[string]interface{}) (interface{}, error) {
-	return nil, fmt.Errorf("cannot validate vaccine without context")
+	return nil, fmt.Errorf("cannot validate provider time window without context")
 }
 
 func (f IsValidProviderTimeWindow) ValidateWithContext(input interface{}, inputs map[string]interface{}, context map[string]interface{}) (interface{}, error) {
@@ -134,7 +134,7 @@ type IsValidAnonTimeWindow struct {
 }
 
 func (f IsValidAnonTimeWindow) Validate(input interface{}, inputs map[string]interface{}) (interface{}, error) {
-	return nil, fmt.Errorf("cannot validate vaccine without context")
+	return nil, fmt.Errorf("cannot validate anon time window without context")
 }
 
 func (f IsValidAnonTimeWindow) ValidateWithContext(input interface{}, inputs map[string]interface{}, context map[string]interface{}) (interface{}, error) {
@@ -161,7 +161,7 @@ type IsValidAnonAggregatedTimeWindow struct {
 }
 
 func (f IsValidAnonAggregatedTimeWindow) Validate(input interface{}, inputs map[string]interface{}) (interface{}, error) {
-	return nil, fmt.Errorf("cannot validate vaccine without context")
+	return nil, fmt.Errorf("cannot validate anon aggregated time window without context")
 }
 
 func (f IsValidAnonAggregatedTimeWindow) ValidateWithContext(input interface{}, inputs map[string]interface{}, context map[string]interface{}) (interface{}, error) {
@@ -855,6 +855,13 @@ var AppointmentPropertiesForm = forms.Form{
 			Validators: []forms.Validator{
 				forms.IsString{},
 				IsValidVaccine{},
+			},
+		},
+		{
+			Name:        "*",
+			Description: "all other properties",
+			Validators: []forms.Validator{
+				forms.IsString{},
 			},
 		},
 	},

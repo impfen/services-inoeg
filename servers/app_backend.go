@@ -83,7 +83,7 @@ func (a *AppointmentsBackend) VerifiedProviderData() *RawProviderData {
 }
 
 func (a *AppointmentsBackend) AppointmentsByDate(providerID []byte, date string) *AppointmentsByDate {
-	dateKey := append(providerID, []byte(date)...)
+	dateKey := append([]byte(date + "::" ), providerID...)
 	return &AppointmentsByDate{
 		dbs: a.db.Map("appointmentsByDate", dateKey),
 	}
@@ -94,6 +94,19 @@ func (a *AppointmentsBackend) AppointmentDatesByID(providerID []byte) *Appointme
 		providerID: providerID,
 		db:         a.db,
 		dbs:        a.db.Map("appointmentDatesByID", providerID),
+	}
+}
+
+func (a *AppointmentsBackend) AppointmentDatesByProperty(
+	providerID []byte,
+	key string,
+	value string,
+) *AppointmentDatesByProperty {
+	propertyKey := append([]byte(key + "::" + value + "::"), providerID...)
+	return &AppointmentDatesByProperty{
+		db:          a.db,
+		dbs:         a.db.Map("appointmentDatesByProperty", propertyKey),
+		propertyKey: propertyKey,
 	}
 }
 
@@ -327,6 +340,37 @@ func (a *AppointmentDatesByID) Set(id []byte, date string) error {
 }
 
 func (a *AppointmentDatesByID) Del(id []byte) error {
+	return a.dbs.Del(id)
+}
+
+type AppointmentDatesByProperty struct {
+	db          services.Database
+	dbs         services.Map
+	propertyKey []byte
+}
+
+func (a *AppointmentDatesByProperty) GetAll() (map[string][]byte, error) {
+	return a.dbs.GetAll()
+}
+
+func (a *AppointmentDatesByProperty) Get(id []byte) (string, error) {
+	if data, err := a.dbs.Get(id); err != nil {
+		return "", err
+	} else {
+		return string(data), nil
+	}
+}
+
+func (a *AppointmentDatesByProperty) Set(appId []byte, date string) error {
+	// ID map will auto-delete after one year (purely for storage reasons, it does not contain sensitive data)
+	setErr := a.dbs.Set(appId, []byte(date))
+	if err := a.db.Expire("appointmentDatesByProperty", a.propertyKey , time.Hour*24*365); err != nil {
+		return err
+	}
+	return setErr
+}
+
+func (a *AppointmentDatesByProperty) Del(id []byte) error {
 	return a.dbs.Del(id)
 }
 

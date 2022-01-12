@@ -66,20 +66,34 @@ func (c *Appointments) publishAppointments(context services.Context, params *ser
 		// check if there's an existing appointment
 		if date, err := appointmentDatesByID.Get(appointment.Data.ID); err == nil {
 
+			// delete old dates index
 			if err := appointmentDatesByID.Del(appointment.Data.ID); err != nil {
 				services.Log.Error(err)
 				return context.InternalError()
 			}
 
 			appointmentsByDate := c.backend.AppointmentsByDate(hash, string(date))
-
 			if existingAppointment, err := appointmentsByDate.Get(c.settings.Validate, appointment.Data.ID); err != nil {
 				services.Log.Error(err)
 				return context.InternalError()
-			} else if err := appointmentsByDate.Del(appointment.Data.ID); err != nil {
-				services.Log.Error(err)
-				return context.InternalError()
 			} else {
+
+				// delete old properties indexes
+				for k, v := range appointment.Data.Properties {
+					appointmentDatesByProperty := c.backend.AppointmentDatesByProperty(hash, k, v)
+					if err := appointmentDatesByProperty.Del(appointment.Data.ID); err != nil {
+						services.Log.Error(err)
+						return context.InternalError()
+					}
+				}
+
+				// delete old appointment
+				if err := appointmentsByDate.Del(appointment.Data.ID); err != nil {
+					services.Log.Error(err)
+					return context.InternalError()
+				}
+
+				// deal with bookings
 				bookings := make([]*services.Booking, 0)
 				for _, existingSlotData := range existingAppointment.Data.SlotData {
 					found := false
@@ -112,23 +126,34 @@ func (c *Appointments) publishAppointments(context services.Context, params *ser
 					}
 				}
 				appointment.Bookings = bookings
+
 			}
 		}
 
+		appointment.UpdatedAt = time.Now()
+
 		date := appointment.Data.Timestamp.Format("2006-01-02")
 
+		// create appointment
 		appointmentsByDate := c.backend.AppointmentsByDate(hash, date)
+		if err := appointmentsByDate.Set(appointment); err != nil {
+			services.Log.Error(err)
+			return context.InternalError()
+		}
 
+		//create ByDate index
 		if err := appointmentDatesByID.Set(appointment.Data.ID, date); err != nil {
 			services.Log.Error(err)
 			return context.InternalError()
 		}
 
-		appointment.UpdatedAt = time.Now()
-
-		if err := appointmentsByDate.Set(appointment); err != nil {
-			services.Log.Error(err)
-			return context.InternalError()
+		// create ByProperty indexes
+		for k, v := range appointment.Data.Properties {
+			appointmentDatesByProperty := c.backend.AppointmentDatesByProperty(hash, k, v)
+			if err := appointmentDatesByProperty.Set(appointment.Data.ID, date); err != nil {
+				services.Log.Error(err)
+				return context.InternalError()
+			}
 		}
 	}
 
