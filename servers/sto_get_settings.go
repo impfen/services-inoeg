@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"github.com/kiebitz-oss/services"
 	"github.com/kiebitz-oss/services/databases"
+	"time"
 )
 
 func toInterface(data []byte) (interface{}, error) {
@@ -32,8 +33,13 @@ func toInterface(data []byte) (interface{}, error) {
 	return v, nil
 }
 
-func (c *Storage) getSettings(context services.Context, params *services.GetSettingsParams) services.Response {
+func (c *Storage) getSettings(
+	context services.Context,
+	params *services.GetSettingsParams,
+) services.Response {
+
 	value := c.db.Value("settings", params.ID)
+
 	if data, err := value.Get(); err != nil {
 		if err == databases.NotFound {
 			return context.NotFound()
@@ -41,10 +47,13 @@ func (c *Storage) getSettings(context services.Context, params *services.GetSett
 			services.Log.Error(err)
 			return context.InternalError()
 		}
+
 	} else if i, err := toInterface(data); err != nil {
 		services.Log.Error(err)
 		return context.InternalError()
 	} else {
+		ttl := time.Duration(c.settings.SettingsTTLDays*24)*time.Hour
+		c.db.Expire("settings", params.ID, ttl)
 		return context.Result(i)
 	}
 }

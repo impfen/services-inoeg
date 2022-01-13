@@ -25,12 +25,18 @@ import (
 )
 
 // store the settings in the database by ID
-func (c *Storage) storeSettings(context services.Context, params *services.StoreSettingsParams) services.Response {
+func (c *Storage) storeSettings(
+	context services.Context,
+	params *services.StoreSettingsParams,
+) services.Response {
+
+	ttl := time.Duration(c.settings.SettingsTTLDays*24)*time.Hour
 	value := c.db.Value("settings", params.ID)
+
 	if dv, err := json.Marshal(params.Data); err != nil {
 		services.Log.Error(err)
 		return context.InternalError()
-	} else if err := value.Set(dv, time.Duration(c.settings.SettingsTTLDays*24)*time.Hour); err != nil {
+	} else if err := value.Set(dv, ttl); err != nil {
 		return context.InternalError()
 	}
 	return context.Acknowledge()
