@@ -53,7 +53,7 @@ func TestPublishAppointments(t *testing.T) {
 			Start:    af.TS("2022-10-01T12:00:00Z"),
 			Duration: 30,
 			Slots:    20,
-			Properties: map[string]interface{}{
+			Properties: map[string]string{
 				"vaccine": "moderna",
 			},
 		}, "appointments"},
