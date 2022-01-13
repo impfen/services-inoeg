@@ -82,11 +82,20 @@ func (a *AppointmentsBackend) VerifiedProviderData() *RawProviderData {
 	}
 }
 
-func (a *AppointmentsBackend) AppointmentsByDate(providerID []byte, date string) *AppointmentsByDate {
+func (a *AppointmentsBackend) AppointmentsByDate(
+	providerID []byte,
+	date string,
+) *AppointmentsByDate {
+
 	dateKey := append([]byte(date + "::" ), providerID...)
+
 	return &AppointmentsByDate{
-		dbs: a.db.Map("appointmentsByDate", dateKey),
+		dateKey:    dateKey,
+		dateString: date,
+		db:         a.db,
+		dbs:        a.db.Map("appointmentsByDate", dateKey),
 	}
+
 }
 
 func (a *AppointmentsBackend) AppointmentDatesByID(providerID []byte) *AppointmentDatesByID {
@@ -364,9 +373,12 @@ func (a *AppointmentDatesByProperty) Get(id []byte) (string, error) {
 func (a *AppointmentDatesByProperty) Set(appId []byte, date string) error {
 	// ID map will auto-delete after one year (purely for storage reasons, it does not contain sensitive data)
 	setErr := a.dbs.Set(appId, []byte(date))
-	if err := a.db.Expire("appointmentDatesByProperty", a.propertyKey , time.Hour*24*365); err != nil {
-		return err
-	}
+	err := a.db.Expire(
+		"appointmentDatesByProperty",
+		a.propertyKey,
+		time.Hour*24*365,
+	)
+	if err != nil { return err }
 	return setErr
 }
 
@@ -397,7 +409,10 @@ func (p *PublicProviderData) Set(id []byte, signedProviderData *services.SignedP
 }
 
 type AppointmentsByDate struct {
-	dbs services.Map
+	dateKey    []byte
+	dateString string
+	db         services.Database
+	dbs        services.Map
 }
 
 func (a *AppointmentsByDate) Del(id []byte) error {
@@ -405,10 +420,19 @@ func (a *AppointmentsByDate) Del(id []byte) error {
 }
 
 func (a *AppointmentsByDate) Set(appointment *services.SignedAppointment) error {
+
+	date, dateErr := time.Parse("2006-01-02", a.dateString)
+	if dateErr != nil { return dateErr }
+	expireAt := date.AddDate(0,0,2) // add two days
+
 	if data, err := json.Marshal(appointment); err != nil {
 		return err
 	} else {
-		return a.dbs.Set(appointment.Data.ID, data)
+		setErr := a.dbs.Set(appointment.Data.ID, data)
+		if err := a.db.ExpireAt("appointmentsByDate", a.dateKey, expireAt); err != nil {
+			return err
+		}
+		return setErr
 	}
 }
 

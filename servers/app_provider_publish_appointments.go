@@ -132,7 +132,7 @@ func (c *Appointments) publishAppointments(context services.Context, params *ser
 
 		appointment.UpdatedAt = time.Now()
 
-		date := appointment.Data.Timestamp.Format("2006-01-02")
+		date := appointment.Data.Timestamp.UTC().Format("2006-01-02")
 
 		// create appointment
 		appointmentsByDate := c.backend.AppointmentsByDate(hash, date)

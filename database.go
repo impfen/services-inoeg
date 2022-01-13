@@ -35,12 +35,13 @@ type DatabaseMaker func(settings interface{}) (Database, error)
 
 type DatabaseOps interface {
 	Expire(table string, key []byte, ttl time.Duration) error
-	Set(table string, key []byte) Set
-	SortedSet(table string, key []byte) SortedSet
+	ExpireAt(table string, key []byte, tm time.Time) error
+	Integer(table string, key []byte) Integer
 	List(table string, key []byte) List
 	Map(table string, key []byte) Map
+	Set(table string, key []byte) Set
+	SortedSet(table string, key []byte) SortedSet
 	Value(table string, key []byte) Value
-	Integer(table string, key []byte) Integer
 }
 
 type Lock interface {

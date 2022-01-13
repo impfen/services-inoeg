@@ -84,6 +84,10 @@ func (d *InMemory) Expire(table string, key []byte, ttl time.Duration) error {
 	return nil
 }
 
+func (d *InMemory) ExpireAt(table string, key []byte, tm time.Time) error {
+	return nil
+}
+
 func (d *InMemory) Set(table string, key []byte) services.Set {
 	return nil
 }

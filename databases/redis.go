@@ -420,6 +420,11 @@ func (d *Redis) Expire(table string, key []byte, ttl time.Duration) error {
 	return d.Client(stringKey).Expire(d.Ctx, stringKey, ttl).Err()
 }
 
+func (d *Redis) ExpireAt(table string, key []byte, tm time.Time) error {
+	stringKey := string(d.fullKey(table, key))
+	return d.Client(stringKey).ExpireAt(d.Ctx, stringKey, tm).Err()
+}
+
 func (d *Redis) Set(table string, key []byte) services.Set {
 	return &RedisSet{
 		db:      d,
