@@ -368,6 +368,21 @@ type GetProviderAppointmentsParams struct {
 	UpdatedSince *time.Time `json:"updatedSince"`
 }
 
+// GetProviderAppointmentsByProperty
+
+type GetProviderAppointmentsByPropertySignedParams struct {
+	JSON      string                                   `json:"data" coerce:"name:json"`
+	Data      *GetProviderAppointmentsByPropertyParams `json:"-" coerce:"name:data"`
+	Signature []byte                                   `json:"signature"`
+	PublicKey []byte                                   `json:"publicKey"`
+}
+
+type GetProviderAppointmentsByPropertyParams struct {
+	Key       string     `json:"key"`
+	Value     string     `json:"value"`
+	Timestamp time.Time  `json:"timestamp"`
+}
+
 // PublishAppointments
 
 type PublishAppointmentsSignedParams struct {

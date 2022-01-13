@@ -46,6 +46,12 @@ var GetProviderAppointmentsRVV = []forms.Validator{
 	},
 }
 
+var GetProviderAppointmentsByPropertyRVV = []forms.Validator{
+	forms.IsStringMap{
+		Form: &ProviderAppointmentsForm,
+	},
+}
+
 var CheckProviderDataRVV = []forms.Validator{
 	forms.IsStringMap{
 		Form: &ConfirmedProviderDataForm,

@@ -255,6 +255,19 @@ func MakeAppointments(settings *services.Settings) (*Appointments, error) {
 				},
 			},
 			{
+				Name:        "getProviderAppointmentsByProperty", // authenticated (provider)
+				Description: "Returns a list of appointments for the given provider.",
+				Form:        &forms.GetProviderAppointmentsByPropertyForm,
+				Handler:     appointments.getProviderAppointmentsByProperty,
+				ReturnType: &api.ReturnType{
+					Validators: forms.GetProviderAppointmentsByPropertyRVV,
+				},
+				REST: &api.REST{
+					Path:   "appointments/property",
+					Method: api.POST,
+				},
+			},
+			{
 				Name:        "getProviderAppointments", // authenticated (provider)
 				Description: "Returns a list of appointments for the given provider.",
 				Form:        &forms.GetProviderAppointmentsForm,

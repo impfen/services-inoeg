@@ -821,6 +821,32 @@ var GetProviderAppointmentsDataForm = forms.Form{
 	},
 }
 
+var GetProviderAppointmentsByPropertyForm = forms.Form{
+	Name:   "getProviderAppointmentsByProperty",
+	Fields: SignedDataFields(&GetProviderAppointmentsByPropertyDataForm),
+}
+
+var GetProviderAppointmentsByPropertyDataForm = forms.Form{
+	Name: "getProviderAppointmentsByPropertyData",
+	Fields: []forms.Field{
+		TimestampField,
+		{
+			Name:        "key",
+			Description: "The earliest date of appointments to return.",
+			Validators: []forms.Validator{
+				forms.IsString{},
+			},
+		},
+		{
+			Name:        "value",
+			Description: "The latest date of appointments to return.",
+			Validators: []forms.Validator{
+				forms.IsString{},
+			},
+		},
+	},
+}
+
 var PublishAppointmentsForm = forms.Form{
 	Name:   "publishAppointments",
 	Fields: SignedDataFields(&PublishAppointmentsDataForm),
