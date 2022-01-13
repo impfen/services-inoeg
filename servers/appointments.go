@@ -229,11 +229,24 @@ func MakeAppointments(settings *services.Settings) (*Appointments, error) {
 				},
 			},
 			{
+				Name:        "getProviderData", // authenticated (mediator)
+				Description: "Returns the provider data for the given provider id",
+				Form:        &forms.GetProviderDataForm,
+				Handler:     appointments.getProviderData,
+				ReturnType:  &api.ReturnType{
+					Validators: forms.GetSingleProviderDataRVV,
+				},
+				REST: &api.REST{
+					Path:   "providers/single",
+					Method: api.POST,
+				},
+			},
+			{
 				Name:        "getPendingProviderData", // authenticated (mediator)
 				Description: "Returns a list of provider data waiting for confirmation.",
 				Form:        &forms.GetPendingProviderDataForm,
 				Handler:     appointments.getPendingProviderData,
-				ReturnType: &api.ReturnType{
+				ReturnType:  &api.ReturnType{
 					Validators: forms.GetProviderDataRVV,
 				},
 				REST: &api.REST{
@@ -246,7 +259,7 @@ func MakeAppointments(settings *services.Settings) (*Appointments, error) {
 				Description: "Returns a list of confirmed provider data.",
 				Form:        &forms.GetVerifiedProviderDataForm,
 				Handler:     appointments.getVerifiedProviderData,
-				ReturnType: &api.ReturnType{
+				ReturnType:  &api.ReturnType{
 					Validators: forms.GetProviderDataRVV,
 				},
 				REST: &api.REST{

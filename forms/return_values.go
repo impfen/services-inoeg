@@ -58,13 +58,15 @@ var CheckProviderDataRVV = []forms.Validator{
 	},
 }
 
+var GetSingleProviderDataRVV = []forms.Validator{
+	forms.IsStringMap{
+		Form: &RawProviderDataForm,
+	},
+}
+
 var GetProviderDataRVV = []forms.Validator{
 	forms.IsList{
-		Validators: []forms.Validator{
-			forms.IsStringMap{
-				Form: &RawProviderDataForm,
-			},
-		},
+		Validators: GetSingleProviderDataRVV,
 	},
 }
 

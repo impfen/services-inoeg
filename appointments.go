@@ -546,6 +546,19 @@ type RawProviderData struct {
 	EncryptedData *crypto.ECDHEncryptedData `json:"encryptedData"`
 }
 
+// GetProviderData
+
+type GetProviderDataSignedParams struct {
+	JSON      string                 `json:"data" coerce:"name:json"`
+	Data      *GetProviderDataParams `json:"-" coerce:"name:data"`
+	Signature []byte                 `json:"signature"`
+	PublicKey []byte                 `json:"publicKey"`
+}
+
+type GetProviderDataParams struct {
+	Timestamp  time.Time `json:"timestamp"`
+	ProviderID []byte    `json:"providerID"`
+}
 // GetPendingProviderData
 
 type GetPendingProviderDataSignedParams struct {

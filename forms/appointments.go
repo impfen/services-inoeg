@@ -1135,6 +1135,18 @@ var StoreProviderDataDataForm = forms.Form{
 	},
 }
 
+var GetProviderDataForm = forms.Form{
+	Name:   "getProviderData",
+	Fields: SignedDataFields(&GetProviderDataDataForm),
+}
+
+var GetProviderDataDataForm = forms.Form{
+	Name: "getProviderDataData",
+	Fields: []forms.Field{
+		ProviderIDField,
+	},
+}
+
 var GetPendingProviderDataForm = forms.Form{
 	Name:   "getPendingProviderData",
 	Fields: SignedDataFields(&GetPendingProviderDataDataForm),
