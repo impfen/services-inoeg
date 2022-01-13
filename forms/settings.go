@@ -325,9 +325,21 @@ var ValidateForm = forms.Form{
 	Name: "validate",
 	Fields: []forms.Field{
 		{
-			Name: "vaccines",
+			Name: "appointment_duration_max",
 			Validators: []forms.Validator{
-				forms.IsStringList{},
+				forms.IsInteger{
+					HasMin: true,
+					Min:    1,
+				},
+			},
+		},
+		{
+			Name: "appointment_duration_min",
+			Validators: []forms.Validator{
+				forms.IsInteger{
+					HasMin: true,
+					Min:    1,
+				},
 			},
 		},
 		{
@@ -355,6 +367,12 @@ var ValidateForm = forms.Form{
 					HasMin: true,
 					Min:    1,
 				},
+			},
+		},
+		{
+			Name: "vaccines",
+			Validators: []forms.Validator{
+				forms.IsStringList{},
 			},
 		},
 	},

@@ -71,8 +71,7 @@ func (j JSON) Validate(value interface{}, values map[string]interface{}) (interf
 	return jsonValue, nil
 }
 
-type IsValidVaccine struct {
-}
+type IsValidVaccine struct {}
 
 func (f IsValidVaccine) Validate(input interface{}, inputs map[string]interface{}) (interface{}, error) {
 	return nil, fmt.Errorf("cannot validate vaccine without context")
@@ -101,9 +100,7 @@ func (f IsValidVaccine) ValidateWithContext(input interface{}, inputs map[string
 	return input, nil
 }
 
-
-type IsValidProviderTimeWindow struct {
-}
+type IsValidProviderTimeWindow struct {}
 
 func (f IsValidProviderTimeWindow) Validate(input interface{}, inputs map[string]interface{}) (interface{}, error) {
 	return nil, fmt.Errorf("cannot validate provider time window without context")
@@ -130,8 +127,7 @@ func (f IsValidProviderTimeWindow) ValidateWithContext(input interface{}, inputs
 	return input, nil
 }
 
-type IsValidAnonTimeWindow struct {
-}
+type IsValidAnonTimeWindow struct {}
 
 func (f IsValidAnonTimeWindow) Validate(input interface{}, inputs map[string]interface{}) (interface{}, error) {
 	return nil, fmt.Errorf("cannot validate anon time window without context")
@@ -157,8 +153,8 @@ func (f IsValidAnonTimeWindow) ValidateWithContext(input interface{}, inputs map
 
 	return input, nil
 }
-type IsValidAnonAggregatedTimeWindow struct {
-}
+
+type IsValidAnonAggregatedTimeWindow struct {}
 
 func (f IsValidAnonAggregatedTimeWindow) Validate(input interface{}, inputs map[string]interface{}) (interface{}, error) {
 	return nil, fmt.Errorf("cannot validate anon aggregated time window without context")
@@ -184,6 +180,44 @@ func (f IsValidAnonAggregatedTimeWindow) ValidateWithContext(input interface{}, 
 
 	return input, nil
 }
+
+type IsValidAppointmentDuration struct {}
+
+func (f IsValidAppointmentDuration) Validate(
+	input interface{},
+	inputs map[string]interface{},
+) (interface{}, error) {
+	return nil, fmt.Errorf("cannot validate appointment duration without context")
+}
+
+func (f IsValidAppointmentDuration) ValidateWithContext(
+	input interface{}, // int64
+	inputs map[string]interface{},
+	context map[string]interface{},
+) (interface{}, error) {
+
+	settings, ok := context["settings"].(*services.ValidateSettings)
+	if !ok {
+		return nil, fmt.Errorf("expected a 'settings' context")
+	}
+
+	if input.(int64) < settings.AppointmentDurationMin {
+		return nil, fmt.Errorf(
+			"duration has a minimum of %d",
+			settings.AppointmentDurationMin,
+		)
+	}
+
+	if input.(int64) > settings.AppointmentDurationMax {
+		return nil, fmt.Errorf(
+			"duration has a maximum of %d",
+			settings.AppointmentDurationMax,
+		)
+	}
+
+	return input, nil
+}
+
 
 var PublicKeyValidators = []forms.Validator{
 	forms.IsBytes{
@@ -969,12 +1003,8 @@ var AppointmentDataForm = forms.Form{
 			Name:        "duration",
 			Description: "Duration of the appointment.",
 			Validators: []forms.Validator{
-				forms.IsInteger{
-					HasMin: true,
-					HasMax: true,
-					Min:    5,
-					Max:    300,
-				},
+				forms.IsInteger{},
+				IsValidAppointmentDuration{},
 			},
 		},
 		{
