@@ -542,7 +542,8 @@ type StoreProviderDataParams struct {
 }
 
 type RawProviderData struct {
-	ID            []byte                    `json:"id,omitempty"`
+	ID            []byte                    `json:"id, omitempty"`
+	Verified      bool                      `json:"verified, omitempty"`
 	EncryptedData *crypto.ECDHEncryptedData `json:"encryptedData"`
 }
 

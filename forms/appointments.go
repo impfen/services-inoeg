@@ -1173,6 +1173,7 @@ var GetProviderDataForm = forms.Form{
 var GetProviderDataDataForm = forms.Form{
 	Name: "getProviderDataData",
 	Fields: []forms.Field{
+		TimestampField,
 		ProviderIDField,
 	},
 }

@@ -41,15 +41,22 @@ func (c *Appointments) getProviderData(
 	unverifiedProviderData := c.backend.UnverifiedProviderData()
 
 	provider, err := verifiedProviderData.Get(params.Data.ProviderID)
-	if err != nil {
+	if err == nil {
+		provider.Verified = true
+	} else {
+
 		if err == databases.NotFound {
 
 			provider, err = unverifiedProviderData.Get(params.Data.ProviderID)
-			if err == databases.NotFound {
-				return context.NotFound()
+			if err == nil {
+				provider.Verified = false
 			} else {
-				services.Log.Error(err)
-				return context.InternalError()
+				if err == databases.NotFound {
+					return context.NotFound()
+				} else {
+					services.Log.Error(err)
+					return context.InternalError()
+				}
 			}
 
 		} else {
@@ -58,6 +65,7 @@ func (c *Appointments) getProviderData(
 		}
 	}
 
+	provider.ID = params.Data.ProviderID
 	return context.Result(provider)
 
 }

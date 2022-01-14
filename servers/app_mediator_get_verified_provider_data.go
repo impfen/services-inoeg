@@ -48,7 +48,9 @@ func (c *Appointments) getVerifiedProviderData(context services.Context, params 
 
 	pdEntries := []*services.RawProviderData{}
 
-	for _, pd := range providerDataMap {
+	for pId, pd := range providerDataMap {
+		pd.ID = []byte(pId)
+		pd.Verified = true
 		pdEntries = append(pdEntries, pd)
 	}
 
