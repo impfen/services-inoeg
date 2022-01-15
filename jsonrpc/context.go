@@ -102,3 +102,10 @@ func (c *Context) InvalidParams(err error) services.Response {
 func (c *Context) InternalError() services.Response {
 	return c.Error(-32603, "internal error", nil)
 }
+
+func (c *Context) IsInternalError(resp services.Response) bool {
+	intErr := c.InternalError().(*Response)
+	a := resp.(*Response).Error.Code    == intErr.Error.Code
+	b := resp.(*Response).Error.Message == intErr.Error.Message
+	return a && b
+}

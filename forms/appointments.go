@@ -1115,13 +1115,13 @@ var CancelAppointmentDataForm = forms.Form{
 	},
 }
 
-var CheckProviderDataForm = forms.Form{
-	Name:   "checkProviderData",
-	Fields: SignedDataFields(&CheckProviderDataDataForm),
+var SignedTimestampForm = forms.Form{
+	Name:   "signedTimestamp",
+	Fields: SignedDataFields(&TimestampForm),
 }
 
-var CheckProviderDataDataForm = forms.Form{
-	Name: "checkProviderDataData",
+var TimestampForm = forms.Form{
+	Name: "timestamp",
 	Fields: []forms.Field{
 		TimestampField,
 	},

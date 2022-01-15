@@ -120,6 +120,10 @@ var IsAcknowledgeRVV = []forms.Validator{
 	forms.IsIn{Choices: []interface{}{"ok"}},
 }
 
+var IsBooleanRVV = []forms.Validator{
+	forms.IsBoolean{},
+}
+
 var GetStatsRVV = []forms.Validator{
 	forms.IsList{
 		Validators: []forms.Validator{

@@ -216,6 +216,19 @@ func MakeAppointments(settings *services.Settings) (*Appointments, error) {
 				},
 			},
 			{
+				Name:        "isValidMediator", // authenticated (provider)
+				Description: "Validates the mediator signature",
+				Form:        &forms.SignedTimestampForm,
+				Handler:     appointments.isValidMediator,
+				ReturnType: &api.ReturnType{
+					Validators: forms.IsBooleanRVV,
+				},
+				REST: &api.REST{
+					Path:   "mediator/isValid",
+					Method: api.POST,
+				},
+			},
+			{
 				Name:        "confirmProvider", // authenticated (mediator)
 				Description: "Confirms a provider by adding its public key data and associated information to the system.",
 				Form:        &forms.ConfirmProviderForm,
@@ -264,6 +277,19 @@ func MakeAppointments(settings *services.Settings) (*Appointments, error) {
 				},
 				REST: &api.REST{
 					Path:   "providers/verified",
+					Method: api.POST,
+				},
+			},
+			{
+				Name:        "isValidProvider", // authenticated (provider)
+				Description: "Checks the verification status of provider data.",
+				Form:        &forms.SignedTimestampForm,
+				Handler:     appointments.isValidProvider,
+				ReturnType: &api.ReturnType{
+					Validators: forms.IsBooleanRVV,
+				},
+				REST: &api.REST{
+					Path:   "provider/isValid",
 					Method: api.POST,
 				},
 			},
@@ -322,7 +348,7 @@ func MakeAppointments(settings *services.Settings) (*Appointments, error) {
 			{
 				Name:        "checkProviderData", // authenticated (provider)
 				Description: "Checks the verification status of provider data.",
-				Form:        &forms.CheckProviderDataForm,
+				Form:        &forms.SignedTimestampForm,
 				Handler:     appointments.checkProviderData,
 				ReturnType: &api.ReturnType{
 					Validators: forms.CheckProviderDataRVV,

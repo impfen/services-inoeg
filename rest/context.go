@@ -77,3 +77,8 @@ func (c *Context) InvalidParams(err error) services.Response {
 func (c *Context) InternalError() services.Response {
 	return c.Error(500, "internal error", nil)
 }
+
+func (c *Context) IsInternalError(resp services.Response) bool {
+	intErr := c.InternalError().(*Response)
+	return resp.(*Response).StatusCode == intErr.StatusCode
+}

@@ -30,6 +30,7 @@ type Context interface {
 	Error(code int, message string, data interface{}) Response
 	InternalError() Response
 	InvalidParams(err error) Response
+	IsInternalError(err Response) bool
 	MethodNotFound() Response
 	NotFound() Response
 	Acknowledge() Response
