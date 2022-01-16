@@ -56,8 +56,15 @@ func (c *Appointments) getProviderAppointments(context services.Context, params 
 	}
 
 	signedAppointments := make([]*services.SignedAppointment, 0)
+	visitedDates := make(map[string]bool)
 
 	for _, dateStr := range allDates {
+
+		if _, ok := visitedDates[string(dateStr)]; ok {
+			continue
+		} else {
+			visitedDates[string(dateStr)] = true
+		}
 
 		date, err := time.Parse("2006-01-02", string(dateStr))
 
