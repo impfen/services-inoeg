@@ -154,6 +154,10 @@ func (f IsValidAnonTimeWindow) ValidateWithContext(input interface{}, inputs map
 	return input, nil
 }
 
+/*
+
+// probably not needed anymore, may be removed in the future
+
 type IsValidAnonAggregatedTimeWindow struct {}
 
 func (f IsValidAnonAggregatedTimeWindow) Validate(input interface{}, inputs map[string]interface{}) (interface{}, error) {
@@ -180,6 +184,8 @@ func (f IsValidAnonAggregatedTimeWindow) ValidateWithContext(input interface{}, 
 
 	return input, nil
 }
+
+*/
 
 type IsValidAppointmentDuration struct {}
 
@@ -705,24 +711,10 @@ var TokenDataForm = forms.Form{
 }
 
 var GetAppointmentsAggregatedForm = forms.Form{
-	Name: "getAppointmentsByZipCode",
+	Name: "getAppointmentsAggregated",
 	Fields: []forms.Field{
 		{
-			Name:        "radius",
-			Description: "The radius around the given zip code for which to show appointments.",
-			Validators: []forms.Validator{
-				forms.IsOptional{Default: 50},
-				forms.IsInteger{
-					HasMin:  true,
-					HasMax:  true,
-					Min:     5,
-					Max:     80,
-					Convert: true,
-				},
-			},
-		},
-		{
-			Name:        "zipCode",
+			Name:        "zipFrom",
 			Description: "The zip code to use as the user location.",
 			Validators: []forms.Validator{
 				forms.IsString{
@@ -732,18 +724,20 @@ var GetAppointmentsAggregatedForm = forms.Form{
 			},
 		},
 		{
-			Name:        "from",
-			Description: "The earliest date of appointments to return.",
+			Name:        "zipTo",
+			Description: "The zip code to use as the user location.",
 			Validators: []forms.Validator{
-				forms.IsTime{Format: "rfc3339"},
+				forms.IsString{
+					MaxLength: 5,
+					MinLength: 5,
+				},
 			},
 		},
 		{
-			Name:        "to",
-			Description: "The latest date of appointments to return.",
+			Name:        "date",
+			Description: "The earliest date of appointments to return.",
 			Validators: []forms.Validator{
-				forms.IsTime{Format: "rfc3339"},
-				IsValidAnonAggregatedTimeWindow{}, // needs to come after from and to
+				forms.IsTime{Format: "rfc3339-date"},
 			},
 		},
 	},

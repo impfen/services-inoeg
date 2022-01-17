@@ -107,7 +107,7 @@ func MakeAppointments(settings *services.Settings) (*Appointments, error) {
 					Validators: forms.GetAppointmentsAggregatedRVV,
 				},
 				REST: &api.REST{
-					Path:   "appointments/aggregated/<zipCode>/<radius>/<from>/<to>",
+					Path:   "appointments/aggregated/<zipFrom>/<zipTo>/<date>",
 					Method: api.GET,
 				},
 			},

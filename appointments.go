@@ -296,6 +296,14 @@ type GetAppointmentsByZipCodeParams struct {
 	To        time.Time `json:"to"`
 }
 
+// GetProvidersAggregated
+
+type GetAppointmentsAggregatedParams struct {
+	Date    time.Time `json:"date"`
+	ZipFrom string    `json:"zipFrom"`
+	ZipTo   string    `json:"zipTo"`
+}
+
 // GetProvidersByZipCode
 
 type GetProvidersByZipCodeParams struct {
@@ -439,14 +447,6 @@ type Appointment struct {
 	PublicKey  []byte            `json:"publicKey"`
 }
 
-type AppointmentAggregated struct {
-	ID         []byte                 `json:"id"`
-	Duration   int64                  `json:"duration"`
-	Properties map[string]string `json:"properties"`
-	SlotN      int                    `json:"slotN"`
-	Timestamp  time.Time              `json:"timestamp"`
-}
-
 func (k *Appointment) Sign(key *crypto.Key) (*SignedAppointment, error) {
 	if data, err := json.Marshal(k); err != nil {
 		return nil, err
@@ -464,6 +464,14 @@ func (k *Appointment) Sign(key *crypto.Key) (*SignedAppointment, error) {
 
 type Slot struct {
 	ID []byte `json:"id"`
+}
+
+type AppointmentAggregated struct {
+	ID         []byte            `json:"id"`
+	Duration   int64             `json:"duration"`
+	Properties map[string]string `json:"properties"`
+	SlotN      int               `json:"slotN"`
+	Timestamp  time.Time         `json:"timestamp"`
 }
 
 // BookAppointment
