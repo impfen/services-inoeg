@@ -22,7 +22,6 @@ import (
 	"github.com/kiebitz-oss/services"
 	"github.com/kiebitz-oss/services/crypto"
 	"sort"
-	"time"
 )
 
 func (c *Appointments) getProviderAppointments(
@@ -62,26 +61,22 @@ func (c *Appointments) getProviderAppointments(
 	signedAppointments := make([]*services.SignedAppointment, 0)
 	visitedDates := make(map[string]bool)
 
-	for _, dateStr := range allDates {
+	dateFrom := params.Data.From.Format("2006-01-02")
+	dateTo := params.Data.To.Format("2006-01-02")
 
-		if _, ok := visitedDates[string(dateStr)]; ok {
+	for _, date := range allDates {
+
+		dateStr := string(date)
+
+		if _, ok := visitedDates[dateStr]; ok {
 			continue
 		} else {
-			visitedDates[string(dateStr)] = true
+			visitedDates[dateStr] = true
 		}
 
-		date, err := time.Parse("2006-01-02", string(dateStr))
+		if dateStr < dateFrom || dateStr > dateTo {continue}
 
-		if err != nil {
-			services.Log.Error(err)
-			continue
-		}
-
-		if date.Before(params.Data.From) || date.After(params.Data.To) {
-			continue
-		}
-
-		appointmentsByDate := c.backend.AppointmentsByDate(hash, string(dateStr))
+		appointmentsByDate := c.backend.AppointmentsByDate(hash, dateStr)
 
 		allAppointments, err := appointmentsByDate.GetAll(c.settings.Validate)
 
