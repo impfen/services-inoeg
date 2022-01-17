@@ -21,10 +21,14 @@ package servers
 import (
 	"github.com/kiebitz-oss/services"
 	"github.com/kiebitz-oss/services/crypto"
+	"sort"
 	"time"
 )
 
-func (c *Appointments) getProviderAppointments(context services.Context, params *services.GetProviderAppointmentsSignedParams) services.Response {
+func (c *Appointments) getProviderAppointments(
+	context services.Context,
+	params *services.GetProviderAppointmentsSignedParams,
+) services.Response {
 
 	resp, providerKey := c.isProvider(context, &services.SignedParams{
 		JSON:      params.JSON,
@@ -87,14 +91,22 @@ func (c *Appointments) getProviderAppointments(context services.Context, params 
 		}
 
 		for _, appointment := range allAppointments {
-			// if the updatedSince parameter is given we only return appointments that have
-			// been updated since the given time
-			if params.Data.UpdatedSince != nil && (params.Data.UpdatedSince.After(appointment.UpdatedAt) || params.Data.UpdatedSince.Equal(appointment.UpdatedAt)) {
-				continue
-			}
+			// if the updatedSince parameter is given we only return appointments that
+			// have been updated since the given time
+			isUpdated := params.Data.UpdatedSince != nil && (
+				params.Data.UpdatedSince.After(appointment.UpdatedAt) ||
+				params.Data.UpdatedSince.Equal(appointment.UpdatedAt) )
+			if isUpdated {continue}
+
 			signedAppointments = append(signedAppointments, appointment)
 		}
 	}
+
+	sort.Slice(signedAppointments, func (a, b int) bool {
+		return signedAppointments[a].Data.Timestamp.Before(
+			signedAppointments[b].Data.Timestamp,
+		)
+	})
 
 	// public provider data structure
 	publicProviderData := c.backend.PublicProviderData()

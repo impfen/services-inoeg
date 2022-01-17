@@ -21,6 +21,7 @@ package servers
 import (
 	"github.com/kiebitz-oss/services"
 	"github.com/kiebitz-oss/services/crypto"
+	"sort"
 )
 
 func (c *Appointments) getProviderAppointmentsByProperty(
@@ -70,7 +71,8 @@ func (c *Appointments) getProviderAppointmentsByProperty(
 			continue
 		}
 
-		appointmentsByDate := c.backend.AppointmentsByDate(providerId, string(dateStr))
+		appointmentsByDate :=
+			c.backend.AppointmentsByDate(providerId, string(dateStr))
 
 		appointment, err := appointmentsByDate.Get(
 			c.settings.Validate,
@@ -83,6 +85,12 @@ func (c *Appointments) getProviderAppointmentsByProperty(
 
 		signedAppointments = append(signedAppointments, appointment)
 	}
+
+	sort.Slice(signedAppointments, func (a, b int) bool {
+		return signedAppointments[a].Data.Timestamp.Before(
+			signedAppointments[b].Data.Timestamp,
+		)
+	})
 
 	// public provider data structure
 	publicProviderData := c.backend.PublicProviderData()
