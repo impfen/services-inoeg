@@ -19,7 +19,9 @@
 package servers
 
 import (
+	"bytes"
 	"github.com/kiebitz-oss/services"
+	"sort"
 )
 
 // mediator-only endpoint
@@ -53,6 +55,10 @@ func (c *Appointments) getVerifiedProviderData(context services.Context, params 
 		pd.Verified = true
 		pdEntries = append(pdEntries, pd)
 	}
+
+	sort.Slice(pdEntries, func (a, b int) bool {
+		return bytes.Compare(pdEntries[a].ID, pdEntries[b].ID) > 0
+	})
 
 	return context.Result(pdEntries)
 

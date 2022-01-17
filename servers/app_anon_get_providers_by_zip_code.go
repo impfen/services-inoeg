@@ -19,14 +19,17 @@
 package servers
 
 import (
+	"bytes"
 	"github.com/kiebitz-oss/services"
 	"github.com/kiebitz-oss/services/crypto"
 	"github.com/kiebitz-oss/services/databases"
+	"sort"
 )
 
 func (c *Appointments) getProvidersByZipCode(
 	context services.Context,
-	params *services.GetProvidersByZipCodeParams) services.Response {
+	params *services.GetProvidersByZipCodeParams,
+) services.Response {
 
 	// get all provider keys
 	providerKeys, err := c.backend.Keys("providers").GetAll()
@@ -47,7 +50,8 @@ func (c *Appointments) getProvidersByZipCode(
 		}
 
 		pkd, err := providerKey.ProviderKeyData()
-		if pkd.QueueData.ZipCode < params.ZipFrom || pkd.QueueData.ZipCode > params.ZipTo {
+		if pkd.QueueData.ZipCode < params.ZipFrom ||
+			 pkd.QueueData.ZipCode > params.ZipTo {
 			continue
 		}
 
@@ -69,8 +73,11 @@ func (c *Appointments) getProvidersByZipCode(
 		providerData.ID = providerID
 
 		providers = append(providers, providerData)
-
 	}
+
+	sort.Slice(providers, func (a, b int) bool {
+		return bytes.Compare(providers[a].ID, providers[b].ID) > 0
+	})
 
 	return context.Result(providers)
 
