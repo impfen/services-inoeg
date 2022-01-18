@@ -99,7 +99,7 @@ func (c *Appointments) getAppointmentsAggregated(
 				len(signedAppointment.Data.SlotData) - len(signedAppointment.Bookings)
 
 			// if all slots are booked we do not return the appointment
-			if slotN <= 1 {
+			if slotN < 1 {
 				continue
 			}
 
