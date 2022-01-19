@@ -21,7 +21,21 @@ package forms
 import (
 	"github.com/kiebitz-oss/services/tls"
 	"github.com/kiprotect/go-helpers/forms"
+	"regexp"
 )
+
+type IsValidRegexp struct {}
+
+func (i IsValidRegexp) Validate(
+	value interface{},
+	values map[string]interface{},
+) (interface{}, error) {
+	// Assumes that stringiness has been validated before...
+	if _, err := regexp.Compile(value.(string)); err != nil {
+		return nil, err
+	}
+	return value, nil
+}
 
 var CorsSettingsForm = forms.Form{
 	Name:     "corsSettings",
@@ -31,7 +45,11 @@ var CorsSettingsForm = forms.Form{
 			Name: "allowed_hosts",
 			Validators: []forms.Validator{
 				forms.IsOptional{Default: []string{}},
-				forms.IsStringList{},
+				forms.IsStringList{
+					Validators: []forms.Validator{
+						IsValidRegexp{},
+					},
+				},
 			},
 		},
 		{
