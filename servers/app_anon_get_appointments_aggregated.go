@@ -23,6 +23,7 @@ import (
 	"github.com/kiebitz-oss/services/crypto"
 	"github.com/kiebitz-oss/services/databases"
 	"sort"
+	"time"
 )
 
 func (c *Appointments) getAppointmentsAggregated(
@@ -36,6 +37,9 @@ func (c *Appointments) getAppointmentsAggregated(
 		services.Log.Error(err)
 		return context.InternalError()
 	}
+
+	// get the current time
+	now := time.Now()
 
 	// public provider data structure
 	publicProviderData := c.backend.PublicProviderData()
@@ -78,46 +82,49 @@ func (c *Appointments) getAppointmentsAggregated(
 
 		appointments := make([]*services.AppointmentAggregated, 0)
 
-		appointmentsByDate := c.backend.AppointmentsByDate(
-			providerID,
-			params.Date.Format("2006-01-02"),
-		)
-		allAppointments, err := appointmentsByDate.GetAll(c.settings.Validate)
+		for day := 0; day <= 7; day++ {
 
-		if err != nil {
-			if err == databases.NotFound {
-				continue
-			} else {
-				services.Log.Error(err)
-				return context.InternalError()
-			}
-		}
+			appointmentsByDate := c.backend.AppointmentsByDate(
+				providerID,
+				params.Date.AddDate(0, 0, day).Format("2006-01-02"),
+			)
+			allAppointments, err := appointmentsByDate.GetAll(c.settings.Validate)
 
-		for _, signedAppointment := range allAppointments {
-
-			slotN :=
-				len(signedAppointment.Data.SlotData) - len(signedAppointment.Bookings)
-
-			// if all slots are booked we do not return the appointment
-			if slotN < 1 {
-				continue
+			if err != nil {
+				if err == databases.NotFound {
+					continue
+				} else {
+					services.Log.Error(err)
+					return context.InternalError()
+				}
 			}
 
-			appointment := &services.AppointmentAggregated{
-				ID:         signedAppointment.Data.ID,
-				Duration:   signedAppointment.Data.Duration,
-				Properties: signedAppointment.Data.Properties,
-				SlotN:      slotN,
-				Timestamp:  signedAppointment.Data.Timestamp,
+			for _, signedAppointment := range allAppointments {
+
+				slotN :=
+					len(signedAppointment.Data.SlotData) - len(signedAppointment.Bookings)
+
+				// if all slots are booked or the appointment is in the past, we do not
+				// return it
+				if slotN < 1 || signedAppointment.Data.Timestamp.Before(now) {
+					continue
+				}
+
+				appointment := &services.AppointmentAggregated{
+					ID:         signedAppointment.Data.ID,
+					Duration:   signedAppointment.Data.Duration,
+					Properties: signedAppointment.Data.Properties,
+					SlotN:      slotN,
+					Timestamp:  signedAppointment.Data.Timestamp,
+				}
+
+				appointments = append(appointments, appointment)
+
 			}
 
-			appointments = append(appointments, appointment)
-
+			if len(appointments) > 10 { break }
 		}
 
-		if len(appointments) == 0 {
-			continue
-		}
 		sort.Slice(appointments, func (a, b int) bool {
 			return appointments[a].Timestamp.Before(appointments[b].Timestamp)
 		})
