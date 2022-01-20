@@ -70,7 +70,7 @@ this:
 kiebitz admin keys setup -e
 ```
 
-Now we can then generate mediator keys. To do this, we simply run
+Now we can generate mediator keys. To do this, we simply run
 
 ```bash
 kiebitz admin keys mediator > data/secret-mediator-keys.json
@@ -162,9 +162,25 @@ kiebitz run storage
 kiebitz run all
 ```
 
+### Logging
+
+The logrus module is used for logging. The default log level is info. More
+verbose log levels are available, namely debug and trace. To run kiebitz at
+another log leve, simply pass the `--level` argument. E.g.
+
+```bash
+kiebitz --level trace run all
+```
+
 ## APIs
 
-The Kiebitz services can be exposed as a JSON-RPC or REST service (or both). For example, if both API types are enabled, the `getAppointmentsByZipCode` endpoint with parameters `zipCode=10707` and `radius=20` can be reached via both of the following queries:
+The Kiebitz services can be exposed as a JSON-RPC or REST service (or both).
+Simply set or remove the jsonrpc or rest section in the storage or appointments
+section of the settings to enable or disable the api for those servers.
+
+For example, if both API types are enabled, the `getAppointmentsByZipCode`
+endpoint with parameters `zipCode=10707` and `radius=20` can be reached via both
+of the following queries:
 
 ```bash
 # REST endpoint
