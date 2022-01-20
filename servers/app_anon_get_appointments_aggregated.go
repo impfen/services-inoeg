@@ -122,7 +122,7 @@ func (c *Appointments) getAppointmentsAggregated(
 
 			}
 
-			if len(appointments) > 10 { break }
+			if len(appointments) > 25 { break }
 		}
 
 		sort.Slice(appointments, func (a, b int) bool {
