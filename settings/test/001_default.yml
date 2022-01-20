@@ -1,5 +1,7 @@
 name: kiebitz
 test: true
+
+# database settings for statistics collection
 meter:
   name: meter
   type: redis
@@ -7,6 +9,8 @@ meter:
     addresses: [ "localhost:6379" ]
     database: 3
     password: ""
+
+# database settings for appointments and user data
 database:
   name: db
   type: redis
@@ -16,8 +20,12 @@ database:
     password: ""
 metrics:
   bind_address: "localhost:9091"
+
+# config for storage api
 storage:
   keys: [ ]
+  # duration of inactivity after wich backup data from users and providers will
+  # be deleted in days
   settings_ttl_days: 30
   http:
     bind_address: localhost:11111
@@ -27,11 +35,13 @@ storage:
     #  key_file: "/$DIR/certs/storage-1.key"
   jsonrpc:
     cors:
+      # regex to match against the origin of the request
       allowed_hosts: [ "http://localhost:8080" ]
       allowed_headers: [ "*" ]
       allowed_methods: [ "POST" ]
   rest:
     cors:
+      # regex to match against the origin of the request
       allowed_hosts: [ "http://localhost:8080" ]
       allowed_headers: [ "*" ]
       allowed_methods: [ "GET", "POST", "PUT", "DELETE" ]
@@ -41,13 +51,15 @@ admin:
   client:
     appointments_endpoint: http://localhost:22222/jsonrpc
     storage_endpoint: http://localhost:11111/jsonrpc
+
+# config for appointments api
 appointments:
   provider_codes_enabled: false
   user_codes_enabled: false
+  # limits for the getProviderByZipCode endpoint
   response_max_provider: 10
   response_max_appointment: 10
-  aggregated_max_provider: 100
-  aggregated_max_appointment: 1000
+  # additional configurable restrictions for the request forms validator
   validate:
     # minimum and maximum duration for appointments in minutes
     appointment_duration_min: 5
@@ -69,11 +81,13 @@ appointments:
     #  key_file: "/$DIR/certs/storage-1.key"
   jsonrpc:
     cors:
+      # regex to match against the origin of the request
       allowed_hosts: [ "http://localhost:8080" ]
       allowed_headers: [ "*" ]
       allowed_methods: [ "POST" ]
   rest:
     cors:
+      # regex to match against the origin of the request
       allowed_hosts: [ "http://localhost:8080" ]
       allowed_headers: [ "*" ]
       allowed_methods: [ "GET", "POST", "PUT", "DELETE" ]
