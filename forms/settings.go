@@ -473,26 +473,6 @@ var AppointmentsForm = forms.Form{
 			},
 		},
 		{
-			Name: "aggregated_max_provider",
-			Validators: []forms.Validator{
-				forms.IsOptional{Default: 100},
-				forms.IsInteger{
-					HasMin: true,
-					Min:    1,
-				},
-			},
-		},
-		{
-			Name: "aggregated_max_appointment",
-			Validators: []forms.Validator{
-				forms.IsOptional{Default: 1000},
-				forms.IsInteger{
-					HasMin: true,
-					Min:    1,
-				},
-			},
-		},
-		{
 			Name: "secret",
 			Validators: []forms.Validator{
 				forms.IsOptional{},
