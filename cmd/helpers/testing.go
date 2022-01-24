@@ -76,13 +76,12 @@ func benchmark(settings *services.Settings) func(c *cli.Context) error {
 					Confirm:   true,
 				},
 				BaseAppointments: af.Appointments{
-					N:        int64(appointments),
-					Start:    af.TS("2022-10-01T12:00:00Z"),
-					Duration: 30,
-					Slots:    int64(slots),
-					Properties: map[string]string{
-						"vaccine": "moderna",
-					},
+					N:          int64(appointments),
+					Start:      af.TS("2022-10-01T12:00:00Z"),
+					Duration:   30,
+					Slots:      int64(slots),
+					Vaccine:    "moderna",
+					Properties: map[string]string{},
 				},
 			}, "providersAndAppointments"},
 		}

@@ -904,14 +904,6 @@ var AppointmentPropertiesForm = forms.Form{
 	Name: "appointmentProperties",
 	Fields: []forms.Field{
 		{
-			Name:        "vaccine",
-			Description: "The vaccine type used.",
-			Validators: []forms.Validator{
-				forms.IsString{},
-				IsValidVaccine{},
-			},
-		},
-		{
 			Name:        "*",
 			Description: "all other properties",
 			Validators: []forms.Validator{
@@ -992,7 +984,7 @@ var SignedAppointmentForm = forms.Form{
 var AppointmentDataForm = forms.Form{
 	Name: "appointmentData",
 	Fields: []forms.Field{
-		TimestampField,
+		IDField,
 		{
 			Name:        "duration",
 			Description: "Duration of the appointment.",
@@ -1010,8 +1002,6 @@ var AppointmentDataForm = forms.Form{
 				},
 			},
 		},
-		PublicKeyField,
-		IDField,
 		{
 			Name:        "slotData",
 			Description: "Appointment slots.",
@@ -1025,6 +1015,16 @@ var AppointmentDataForm = forms.Form{
 				},
 			},
 		},
+		TimestampField,
+		{
+			Name:        "vaccine",
+			Description: "The vaccine type used.",
+			Validators: []forms.Validator{
+				forms.IsString{},
+				IsValidVaccine{},
+			},
+		},
+		PublicKeyField,
 	},
 }
 

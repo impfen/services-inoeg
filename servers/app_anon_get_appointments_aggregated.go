@@ -115,6 +115,7 @@ func (c *Appointments) getAppointmentsAggregated(
 					Duration:   signedAppointment.Data.Duration,
 					Properties: signedAppointment.Data.Properties,
 					SlotN:      slotN,
+					Vaccine:    signedAppointment.Data.Vaccine,
 					Timestamp:  signedAppointment.Data.Timestamp,
 				}
 

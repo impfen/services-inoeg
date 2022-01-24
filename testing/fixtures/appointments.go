@@ -38,6 +38,7 @@ type Appointments struct {
 	Duration   int64
 	N          int64
 	Slots      int64
+	Vaccine    string
 	Properties map[string]string
 }
 
@@ -62,8 +63,9 @@ func (c Appointments) Setup(fixtures map[string]interface{}) (interface{}, error
 		if appointment, err := services.MakeAppointment(ct, c.Slots, c.Duration); err != nil {
 			return nil, err
 		} else {
-			appointment.PublicKey = provider.Actor.EncryptionKey.PublicKey
+			appointment.PublicKey  = provider.Actor.EncryptionKey.PublicKey
 			appointment.Properties = c.Properties
+			appointment.Vaccine    = c.Vaccine
 			if signedAppointment, err := appointment.Sign(provider.Actor.SigningKey); err != nil {
 				return nil, err
 			} else {
@@ -85,6 +87,7 @@ func (c Appointments) Setup(fixtures map[string]interface{}) (interface{}, error
 		json, _ := resp.JSON()
 		return nil, fmt.Errorf("cannot publish appointments: %v", json)
 	}
+
 
 	return appointments, nil
 
