@@ -22,36 +22,23 @@ import (
 	"github.com/kiebitz-oss/services"
 )
 
-func (c *Appointments) isValidProvider(
+func (c *Appointments) isValidatedProvider(
 	context services.Context,
 	params *services.CheckProviderDataSignedParams,
 ) services.Response {
 
-	validatedErr, _ := c.isProvider(context, &services.SignedParams{
+	resp, _ := c.isProvider(context, &services.SignedParams{
 		JSON:      params.JSON,
 		Signature: params.Signature,
 		PublicKey: params.PublicKey,
 		Timestamp: params.Data.Timestamp,
 	})
 
-	pendingErr := c.isPendingProvider(context, &services.SignedParams{
-		JSON:      params.JSON,
-		Signature: params.Signature,
-		PublicKey: params.PublicKey,
-		Timestamp: params.Data.Timestamp,
-	})
-
-	if validatedErr != nil && pendingErr != nil{
-
-		if context.IsInternalError(validatedErr) {
-			return validatedErr
-
-		} else if context.IsInternalError(pendingErr) {
-			return pendingErr
-
+	if resp != nil {
+		if context.IsInternalError(resp) {
+			return resp
 		} else {
 			return context.Result(false)
-
 		}
 	}
 

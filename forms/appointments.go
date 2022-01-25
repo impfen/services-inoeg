@@ -1109,6 +1109,27 @@ var CancelAppointmentDataForm = forms.Form{
 	},
 }
 
+var ValidateUserForm = forms.Form {
+	Name:   "validateUser",
+	Fields: SignedDataFields(&ValidateUserDataForm),
+}
+
+var ValidateUserDataForm = forms.Form{
+	Name: "validateUserData",
+	Fields: []forms.Field{
+		TimestampField,
+		{
+			Name:        "signedTokenData",
+			Description: "Signed token data of the user.",
+			Validators: []forms.Validator{
+				forms.IsStringMap{
+					Form: &SignedTokenDataForm,
+				},
+			},
+		},
+	},
+}
+
 var SignedTimestampForm = forms.Form{
 	Name:   "signedTimestamp",
 	Fields: SignedDataFields(&TimestampForm),

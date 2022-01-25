@@ -79,6 +79,9 @@ func (c *Context) InternalError() services.Response {
 }
 
 func (c *Context) IsInternalError(resp services.Response) bool {
+	if resp == nil {
+		return false
+	}
 	intErr := c.InternalError().(*Response)
 	return resp.(*Response).StatusCode == intErr.StatusCode
 }

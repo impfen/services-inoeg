@@ -476,6 +476,20 @@ type AppointmentAggregated struct {
 	Vaccine    string            `json:"vaccine"`
 }
 
+// ValidateUser
+
+type ValidateUserSignedParams struct {
+	JSON      string              `json:"data" coerce:"name:json"`
+	Data      *ValidateUserParams `json:"-" coerce:"name:data"`
+	Signature []byte              `json:"signature"`
+	PublicKey []byte              `json:"publicKey"`
+}
+
+type ValidateUserParams struct {
+	SignedTokenData *SignedTokenData          `json:"signedTokenData"`
+	Timestamp       time.Time                 `json:"timestamp"`
+}
+
 // BookAppointment
 
 type BookAppointmentSignedParams struct {

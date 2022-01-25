@@ -285,11 +285,24 @@ func MakeAppointments(settings *services.Settings) (*Appointments, error) {
 				Description: "Checks the verification status of provider data.",
 				Form:        &forms.SignedTimestampForm,
 				Handler:     appointments.isValidProvider,
-				ReturnType: &api.ReturnType{
+				ReturnType:  &api.ReturnType{
 					Validators: forms.IsBooleanRVV,
 				},
 				REST: &api.REST{
 					Path:   "provider/isValid",
+					Method: api.POST,
+				},
+			},
+			{
+				Name:        "isValidatedProvider", // authenticated (provider)
+				Description: "Checks the verification status of provider data.",
+				Form:        &forms.SignedTimestampForm,
+				Handler:     appointments.isValidatedProvider,
+				ReturnType:  &api.ReturnType{
+					Validators: forms.IsBooleanRVV,
+				},
+				REST: &api.REST{
+					Path:   "provider/isValidated",
 					Method: api.POST,
 				},
 			},
@@ -382,6 +395,19 @@ func MakeAppointments(settings *services.Settings) (*Appointments, error) {
 				REST: &api.REST{
 					Path:   "appointments/cancel",
 					Method: api.DELETE,
+				},
+			},
+			{
+				Name:        "isValidUser", // authenticated (user)
+				Description: "Validates the user token signature",
+				Form:        &forms.ValidateUserForm,
+				Handler:     appointments.isValidUser,
+				ReturnType: &api.ReturnType{
+					Validators: forms.IsBooleanRVV,
+				},
+				REST: &api.REST{
+					Path:   "user/isValid",
+					Method: api.POST,
 				},
 			},
 		},
@@ -503,7 +529,59 @@ func (c *Appointments) isMediator(context services.Context, params *services.Sig
 	}
 }
 
-func (c *Appointments) isProvider(context services.Context, params *services.SignedParams) (services.Response, *services.ActorKey) {
+func (c *Appointments) isPendingProvider(
+	context services.Context,
+	params *services.SignedParams,
+) (services.Response) {
+
+	if expired(params.Timestamp) {
+		return context.Error(410, "signature expired", nil)
+	}
+
+	providerID := crypto.Hash(params.PublicKey)
+
+	unverifiedProviderData := c.backend.UnverifiedProviderData()
+	pDataMap, err := unverifiedProviderData.GetAll()
+	if err != nil {
+		services.Log.Error(err)
+		return context.InternalError()
+	}
+
+	found := false
+	for pId, _ := range pDataMap {
+		if bytes.Equal([]byte(pId), providerID) {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return context.Error(401, "not authorized", nil)
+	}
+
+	if ok, err := crypto.VerifyWithBytes(
+		[]byte(params.JSON),
+		params.Signature,
+		params.PublicKey,
+	); err != nil {
+		services.Log.Error(err)
+		return context.InternalError()
+	} else if !ok {
+		return context.Error(403, "invalid signature", nil)
+	} else {
+		return nil
+	}
+
+}
+
+func (c *Appointments) isProvider(
+	context services.Context,
+	params *services.SignedParams,
+) (services.Response, *services.ActorKey) {
+
+	if expired(params.Timestamp) {
+		return context.Error(410, "signature expired", nil), nil
+	}
 
 	keys, err := c.getActorKeys()
 
@@ -512,10 +590,14 @@ func (c *Appointments) isProvider(context services.Context, params *services.Sig
 		return context.InternalError(), nil
 	}
 
-	if resp, key := c.isValidActorSignature(context, []byte(params.JSON), params.Signature, params.PublicKey, keys.Providers); resp != nil {
+	if resp, key := c.isValidActorSignature(
+		context,
+		[]byte(params.JSON),
+		params.Signature,
+		params.PublicKey,
+		keys.Providers,
+	); resp != nil {
 		return resp, nil
-	} else if expired(params.Timestamp) {
-		return context.Error(410, "signature expired", nil), nil
 	} else {
 		return nil, key
 	}

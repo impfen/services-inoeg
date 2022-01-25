@@ -104,6 +104,9 @@ func (c *Context) InternalError() services.Response {
 }
 
 func (c *Context) IsInternalError(resp services.Response) bool {
+	if resp == nil {
+		return false
+	}
 	intErr := c.InternalError().(*Response)
 	a := resp.(*Response).Error.Code    == intErr.Error.Code
 	b := resp.(*Response).Error.Message == intErr.Error.Message
