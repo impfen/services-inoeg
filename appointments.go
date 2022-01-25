@@ -584,6 +584,12 @@ type GetProviderDataParams struct {
 	Timestamp  time.Time `json:"timestamp"`
 	ProviderID []byte    `json:"providerID"`
 }
+
+type GetProviderResult struct {
+	UnverifiedData *RawProviderData `json:"unverifiedData"`
+	VerifiedData   *RawProviderData `json:"verifiedData"`
+}
+
 // GetPendingProviderData
 
 type GetPendingProviderDataSignedParams struct {

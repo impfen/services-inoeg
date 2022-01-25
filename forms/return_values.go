@@ -60,7 +60,29 @@ var CheckProviderDataRVV = []forms.Validator{
 
 var GetSingleProviderDataRVV = []forms.Validator{
 	forms.IsStringMap{
-		Form: &RawProviderDataForm,
+		Form: &forms.Form{
+			Name:   "getSingleProviderData",
+			Fields: []forms.Field{
+				{
+					Name:        "unverifiedData",
+					Description: "the unverified provider data",
+					Validators: []forms.Validator{
+						forms.IsStringMap{
+							Form: &RawProviderDataForm,
+						},
+					},
+				},
+				{
+					Name: "verifiedData",
+					Description: "the verified provider data",
+					Validators: []forms.Validator{
+						forms.IsStringMap{
+							Form: &RawProviderDataForm,
+						},
+					},
+				},
+			},
+		},
 	},
 }
 
