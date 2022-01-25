@@ -26,12 +26,12 @@ storage:
     #  key_file: "/$DIR/certs/storage-1.key"
   jsonrpc:
     cors:
-      allowed_hosts: [ "http://localhost:8080" ]
+      allowed_hosts: [ "http://localhost:3000" ]
       allowed_headers: [ "*" ]
       allowed_methods: [ "POST" ]
   rest:
     cors:
-      allowed_hosts: [ "http://localhost:8080" ]
+      allowed_hosts: [ "http://localhost:3000" ]
       allowed_headers: [ "*" ]
       allowed_methods: [ "GET", "POST", "PUT", "DELETE" ]
 admin:
@@ -60,7 +60,7 @@ appointments:
     anon_aggregated_max_time_window: 7
     # the maximum duration for the time window for provider requests in days
     provider_max_time_window: 14
-    vaccines: [ "biontech", "moderna", "astrazeneca", "johnson-johnson" ]
+    vaccines: [ "mrna", "biontech", "biontechchildren", "moderna" ]
   keys: [ ]
   http:
     bind_address: localhost:8888
@@ -70,11 +70,11 @@ appointments:
     #  key_file: "/$DIR/certs/storage-1.key"
   jsonrpc:
     cors:
-      allowed_hosts: [ "http://localhost:8080" ]
+      allowed_hosts: [ "http://localhost:3000" ]
       allowed_headers: [ "*" ]
       allowed_methods: [ "POST" ]
   rest:
     cors:
-      allowed_hosts: [ "http://localhost:8080" ]
+      allowed_hosts: [ "http://localhost:3000" ]
       allowed_headers: [ "*" ]
       allowed_methods: [ "GET", "POST", "PUT", "DELETE" ]
