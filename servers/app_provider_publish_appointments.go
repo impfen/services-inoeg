@@ -43,6 +43,14 @@ func (c *Appointments) publishAppointments(context services.Context, params *ser
 		return context.Error(410, "signature expired", nil)
 	}
 
+	if len(params.Data.Appointments) > 500 {
+		return context.Error(
+			429,
+			"max number of appointments per post exceeded",
+			nil,
+		)
+	}
+
 	pkd, err := providerKey.ProviderKeyData()
 
 	if err != nil {
