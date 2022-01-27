@@ -351,7 +351,7 @@ func (k *ProviderData) Sign(key *crypto.Key) (*SignedProviderData, error) {
 }
 
 type ProviderData struct {
-	ID          []byte `json:"id, omitempty"`
+	ID          []byte `json:"id,omitempty"`
 	Name        string `json:"name"`
 	Street      string `json:"street"`
 	City        string `json:"city"`
@@ -566,8 +566,8 @@ type StoreProviderDataParams struct {
 }
 
 type RawProviderData struct {
-	ID            []byte                    `json:"id, omitempty"`
-	Verified      bool                      `json:"verified, omitempty"`
+	ID            []byte                    `json:"id,omitempty"`
+	Verified      bool                      `json:"verified,omitempty"`
 	EncryptedData *crypto.ECDHEncryptedData `json:"encryptedData"`
 }
 
