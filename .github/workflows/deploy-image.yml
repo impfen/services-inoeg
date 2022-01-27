@@ -57,3 +57,10 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          
+      - name: Dispatch raw deployment
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ secrets.PAT_FOR_WORKFLOW }}
+          repository: impfen/kubernetes
+          event-type: raw-deployment
