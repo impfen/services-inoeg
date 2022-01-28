@@ -76,7 +76,11 @@ func (d *InMemory) Open() error {
 	return nil
 }
 
-func (d *InMemory) Lock(lockKey string) (services.Lock, error) {
+func (d *InMemory) LockDefault(key string) (services.Lock, error) { 
+	return nil, nil
+}
+
+func (d *InMemory) Lock(lockKey string, a, b time.Duration) (services.Lock, error) {
 	return nil, nil
 }
 

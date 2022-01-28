@@ -44,41 +44,12 @@ type Redis struct {
 }
 
 type RedisLock struct {
-	lockKey     string
-	client      redis.UniversalClient
-	ctx         context.Context
-	dLockClient *redislock.Client
-	dLock       *redislock.Lock
-}
-
-func MakeRedisLock(ctx context.Context, lockKey string, client redis.UniversalClient) *RedisLock {
-	return &RedisLock{
-		client:      client,
-		lockKey:     lockKey,
-		ctx:         ctx,
-		dLockClient: redislock.New(client),
-	}
-}
-
-func (r *RedisLock) Lock() error {
-
-	lock, err := r.dLockClient.Obtain(r.ctx, r.lockKey, 100*time.Millisecond, nil)
-
-	if err != nil {
-		return err
-	}
-
-	r.dLock = lock
-	return nil
+	ctx  context.Context
+	lock *redislock.Lock
 }
 
 func (r *RedisLock) Release() error {
-	if r.dLock == nil {
-		services.Log.Errorf("Unable to release lock %s, which was never locked.", r.lockKey)
-		return errors.New("no lock")
-	}
-
-	return r.dLock.Release(r.ctx)
+	return r.lock.Release(r.ctx)
 }
 
 type RedisShardSettings struct {
@@ -356,16 +327,33 @@ func (d *Redis) Reset() error {
 	return nil
 }
 
-func (d *Redis) Lock(lockKey string) (services.Lock, error) {
-	c := d.Client(lockKey)
-	redisLock := MakeRedisLock(d.Ctx, lockKey, c)
+func (d *Redis) LockDefault(key string) (services.Lock, error) { 
+	return d.Lock(key, time.Second*10, time.Millisecond*100)
+}
 
-	if err := redisLock.Lock(); err != nil {
+func (d *Redis) Lock(
+	lockKey string,
+	lockWait time.Duration,
+	ttl time.Duration,
+) (services.Lock, error) {
+
+	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(lockWait))
+
+	lock, err := redislock.Obtain(
+		ctx,
+		d.Client(lockKey),
+		lockKey,
+		ttl,
+		&redislock.Options{
+			RetryStrategy: redislock.LinearBackoff(time.Millisecond*10),
+		},
+	)
+
+	if err != nil {
 		return nil, err
 	}
 
-	return redisLock, nil
-
+	return &RedisLock{ctx: ctx, lock: lock}, nil
 }
 
 func (d *Redis) getShardForKey(key string) uint32 {

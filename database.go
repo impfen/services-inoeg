@@ -53,7 +53,8 @@ type Database interface {
 	Close() error
 	Open() error
 	Reset() error
-	Lock(lockKey string) (Lock, error)
+	Lock(key string, lockWait, ttl time.Duration) (Lock, error)
+	LockDefault(key string) (Lock, error)
 
 	DatabaseOps
 }
