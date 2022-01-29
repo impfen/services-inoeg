@@ -428,18 +428,6 @@ func (c *Appointments) Key(key string) *crypto.Key {
 	return c.settings.Key(key)
 }
 
-func (c *Appointments) getKeysData() (*services.Keys, error) {
-
-	providerDataKey := c.settings.Key("provider")
-
-	return &services.Keys{
-		ProviderData: providerDataKey.PublicKey,
-		RootKey:      c.settings.Key("root").PublicKey,
-		TokenKey:     c.settings.Key("token").PublicKey,
-	}, nil
-
-}
-
 func (c *Appointments) getActorKeys() (*services.KeyLists, error) {
 
 	mediatorKeys, err := c.backend.Keys("mediators").GetAll()

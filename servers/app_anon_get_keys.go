@@ -23,14 +23,14 @@ import (
 )
 
 // return all public keys present in the system
-func (c *Appointments) getKeys(context services.Context, params *services.GetKeysParams) services.Response {
+func (c *Appointments) getKeys(
+	context services.Context,
+	params *services.GetKeysParams,
+) services.Response {
 
-	keys, err := c.getKeysData()
-
-	if err != nil {
-		services.Log.Error(err)
-		return context.InternalError()
-	}
-
-	return context.Result(keys)
+	return context.Result(services.Keys{
+		ProviderData: c.settings.Key("provider").PublicKey,
+		RootKey:      c.settings.Key("root").PublicKey,
+		TokenKey:     c.settings.Key("token").PublicKey,
+	})
 }
