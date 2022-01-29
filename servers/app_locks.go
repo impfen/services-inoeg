@@ -19,37 +19,29 @@
 package servers
 
 import (
+	"encoding/base64"
 	"github.com/kiebitz-oss/services"
-	"github.com/kiebitz-oss/services/crypto"
-	"github.com/kiebitz-oss/services/databases"
 )
 
-func (c *Appointments) checkProviderData(
-	context services.Context,
-	params *services.CheckProviderDataSignedParams,
-) services.Response {
-
-	resp, _ := c.isProvider(context, &services.SignedParams{
-		JSON:      params.JSON,
-		Signature: params.Signature,
-		PublicKey: params.PublicKey,
-		Timestamp: params.Data.Timestamp,
-	})
-
-	if resp != nil {
-		return resp
-	}
-
-	providerId := crypto.Hash(params.PublicKey)
-	encryptedProviderData := c.backend.ConfirmedProviderData()
-
-	if providerData, err := encryptedProviderData.Get(providerId); err != nil {
-		if err == databases.NotFound {
-			return context.NotFound()
-		}
-		services.Log.Error(err)
-		return context.InternalError()
-	} else {
-		return context.Result(providerData)
-	}
+func toBase64 (bytes []byte) string {
+	return base64.RawURLEncoding.EncodeToString(bytes)
 }
+
+func (c *Appointments) LockProvider (
+	providerId []byte,
+) (services.Lock, error) {
+
+	return c.db.LockDefault(
+		"Lock::Provider::" + toBase64(providerId),
+	)
+}
+
+func (c *Appointments) LockAppointment (
+	appointmentId []byte,
+) (services.Lock, error) {
+
+	return c.db.LockDefault(
+		"Lock::Appointment::" + toBase64(appointmentId),
+	)
+}
+

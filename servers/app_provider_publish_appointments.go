@@ -20,13 +20,16 @@ package servers
 
 import (
 	"bytes"
-	"encoding/hex"
+	//"encoding/hex"
 	"github.com/kiebitz-oss/services"
 	"github.com/kiebitz-oss/services/crypto"
 	"time"
 )
 
-func (c *Appointments) publishAppointments(context services.Context, params *services.PublishAppointmentsSignedParams) services.Response {
+func (c *Appointments) publishAppointments(
+	context services.Context,
+	params *services.PublishAppointmentsSignedParams,
+) services.Response {
 
 	resp, providerKey := c.isProvider(context, &services.SignedParams{
 		JSON:      params.JSON,
@@ -58,116 +61,21 @@ func (c *Appointments) publishAppointments(context services.Context, params *ser
 		return context.InternalError()
 	}
 
-	// the provider "ID" is the hash of the signing key
-	hash := crypto.Hash(pkd.Signing)
-	hexUID := hex.EncodeToString(hash)
-
-	// appointments are stored in a provider-specific key
-	appointmentDatesByID := c.backend.AppointmentDatesByID(hash)
-	usedTokens := c.backend.UsedTokens()
-
-	// to do: fix statistics generation
-	var bookedSlots, openSlots int64
+	providerId := crypto.Hash(pkd.Signing)
+	// TODO: fix statistics generation
+	//var bookedSlots, openSlots int64
 
 	for _, appointment := range params.Data.Appointments {
-
-		// check if there's an existing appointment
-		if date, err := appointmentDatesByID.Get(appointment.Data.ID); err == nil {
-
-			// delete old dates index
-			if err := appointmentDatesByID.Del(appointment.Data.ID); err != nil {
-				services.Log.Error(err)
-				return context.InternalError()
-			}
-
-			appointmentsByDate := c.backend.AppointmentsByDate(hash, string(date))
-			if existingAppointment, err := appointmentsByDate.Get(c.settings.Validate, appointment.Data.ID); err != nil {
-				services.Log.Error(err)
-				return context.InternalError()
-			} else {
-
-				// delete old properties indexes
-				for k, v := range appointment.Data.Properties {
-					appointmentDatesByProperty := c.backend.AppointmentDatesByProperty(hash, k, v)
-					if err := appointmentDatesByProperty.Del(appointment.Data.ID); err != nil {
-						services.Log.Error(err)
-						return context.InternalError()
-					}
-				}
-
-				// delete old appointment
-				if err := appointmentsByDate.Del(appointment.Data.ID); err != nil {
-					services.Log.Error(err)
-					return context.InternalError()
-				}
-
-				// deal with bookings
-				bookings := make([]*services.Booking, 0)
-				for _, existingSlotData := range existingAppointment.Data.SlotData {
-					found := false
-					for _, slotData := range appointment.Data.SlotData {
-						if bytes.Equal(slotData.ID, existingSlotData.ID) {
-							found = true
-							break
-						}
-					}
-					if found {
-						// this slot has been preserved, if there's any booking for it we migrate it
-						for _, booking := range existingAppointment.Bookings {
-							if bytes.Equal(booking.ID, existingSlotData.ID) {
-								bookings = append(bookings, booking)
-								break
-							}
-						}
-					} else {
-						// this slot has been deleted, if there's any booking for it we delete it
-						for _, booking := range existingAppointment.Bookings {
-							if bytes.Equal(booking.ID, existingSlotData.ID) {
-								// we re-enable the associated token
-								if err := usedTokens.Del(booking.Token); err != nil {
-									services.Log.Error(err)
-									return context.InternalError()
-								}
-								break
-							}
-						}
-					}
-				}
-				appointment.Bookings = bookings
-
-			}
-		}
-
-		appointment.UpdatedAt = time.Now()
-
-		date := appointment.Data.Timestamp.UTC().Format("2006-01-02")
-
-		// create appointment
-		appointmentsByDate := c.backend.AppointmentsByDate(hash, date)
-		if err := appointmentsByDate.Set(appointment); err != nil {
-			services.Log.Error(err)
-			return context.InternalError()
-		}
-
-		//create ByDate index
-		if err := appointmentDatesByID.Set(appointment.Data.ID, date); err != nil {
-			services.Log.Error(err)
-			return context.InternalError()
-		}
-
-		// create ByProperty indexes
-		for k, v := range appointment.Data.Properties {
-			appointmentDatesByProperty := c.backend.AppointmentDatesByProperty(hash, k, v)
-			if err := appointmentDatesByProperty.Set(appointment.Data.ID, date); err != nil {
-				services.Log.Error(err)
-				return context.InternalError()
-			}
-		}
+		res := updateOrCreateAppointment(c, context, providerId, appointment)
+		if res != nil { return res }
 	}
 
+	// TODO: fix statistics generation
+	/*
 	if c.meter != nil {
 
 		now := time.Now().UTC().UnixNano()
+		hexUID := hex.EncodeToString(providerId)
 
 		addTokenStats := func(tw services.TimeWindow, data map[string]string) error {
 			// we add the maximum of the open appointments
@@ -205,6 +113,127 @@ func (c *Appointments) publishAppointments(context services.Context, params *ser
 		}
 
 	}
+	*/
 
 	return context.Acknowledge()
+}
+
+func updateOrCreateAppointment (
+	c *Appointments,
+	context services.Context,
+	providerId []byte,
+	appointment *services.SignedAppointment,
+) services.Response {
+
+	// appointments are stored in a provider-specific key
+	appointmentDatesByID := c.backend.AppointmentDatesByID(providerId)
+	usedTokens := c.backend.UsedTokens()
+
+	lock, err := c.LockAppointment(appointment.Data.ID)
+	if err != nil {
+		services.Log.Error(err)
+		return context.InternalError()
+	}
+	defer lock.Release()
+
+	// check if there's an existing appointment
+	if date, err := appointmentDatesByID.Get(appointment.Data.ID); err == nil {
+
+		// delete old dates index
+		if err := appointmentDatesByID.Del(appointment.Data.ID); err != nil {
+			services.Log.Error(err)
+			return context.InternalError()
+		}
+
+		appointmentsByDate :=
+			c.backend.AppointmentsByDate(providerId, string(date))
+
+		if existingAppointment, err := appointmentsByDate.Get(
+			c.settings.Validate,
+			appointment.Data.ID,
+		); err != nil {
+			services.Log.Error(err)
+			return context.InternalError()
+		} else {
+
+			// delete old properties indexes
+			for k, v := range appointment.Data.Properties {
+				appointmentDatesByProperty :=
+					c.backend.AppointmentDatesByProperty(providerId, k, v)
+				if err := appointmentDatesByProperty.Del(appointment.Data.ID); err != nil {
+					services.Log.Error(err)
+					return context.InternalError()
+				}
+			}
+
+			// delete old appointment
+			if err := appointmentsByDate.Del(appointment.Data.ID); err != nil {
+				services.Log.Error(err)
+				return context.InternalError()
+			}
+
+			// deal with bookings
+			bookings := make([]*services.Booking, 0)
+			for _, existingSlotData := range existingAppointment.Data.SlotData {
+				found := false
+				for _, slotData := range appointment.Data.SlotData {
+					if bytes.Equal(slotData.ID, existingSlotData.ID) {
+						found = true
+						break
+					}
+				}
+				if found {
+					// this slot has been preserved, if there's any booking for it we migrate it
+					for _, booking := range existingAppointment.Bookings {
+						if bytes.Equal(booking.ID, existingSlotData.ID) {
+							bookings = append(bookings, booking)
+							break
+						}
+					}
+				} else {
+					// this slot has been deleted, if there's any booking for it we delete it
+					for _, booking := range existingAppointment.Bookings {
+						if bytes.Equal(booking.ID, existingSlotData.ID) {
+							// we re-enable the associated token
+							if err := usedTokens.Del(booking.Token); err != nil {
+								services.Log.Error(err)
+								return context.InternalError()
+							}
+							break
+						}
+					}
+				}
+			}
+			appointment.Bookings = bookings
+
+		}
+	}
+
+	appointment.UpdatedAt = time.Now()
+
+	date := appointment.Data.Timestamp.UTC().Format("2006-01-02")
+
+	// create appointment
+	appointmentsByDate := c.backend.AppointmentsByDate(providerId, date)
+	if err := appointmentsByDate.Set(appointment); err != nil {
+		services.Log.Error(err)
+		return context.InternalError()
+	}
+
+	//create ByDate index
+	if err := appointmentDatesByID.Set(appointment.Data.ID, date); err != nil {
+		services.Log.Error(err)
+		return context.InternalError()
+	}
+
+	// create ByProperty indexes
+	for k, v := range appointment.Data.Properties {
+		appointmentDatesByProperty := c.backend.AppointmentDatesByProperty(providerId, k, v)
+		if err := appointmentDatesByProperty.Set(appointment.Data.ID, date); err != nil {
+			services.Log.Error(err)
+			return context.InternalError()
+		}
+	}
+
+	return nil
 }

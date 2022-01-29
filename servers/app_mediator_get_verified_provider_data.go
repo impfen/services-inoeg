@@ -26,7 +26,10 @@ import (
 
 // mediator-only endpoint
 // { limit }, keyPair
-func (c *Appointments) getVerifiedProviderData(context services.Context, params *services.GetPendingProviderDataSignedParams) services.Response {
+func (c *Appointments) getVerifiedProviderData(
+	context services.Context,
+	params *services.GetPendingProviderDataSignedParams,
+) services.Response {
 
 	resp, _ := c.isMediator(context, &services.SignedParams{
 		JSON:      params.JSON,

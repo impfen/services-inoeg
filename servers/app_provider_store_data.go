@@ -25,12 +25,20 @@ import (
 )
 
 // { id, encryptedData, code }, keyPair
-func (c *Appointments) storeProviderData(context services.Context, params *services.StoreProviderDataSignedParams) services.Response {
+func (c *Appointments) storeProviderData(
+	context services.Context,
+	params *services.StoreProviderDataSignedParams,
+) services.Response {
 
-	// we verify the signature (without veryfing e.g. the provenance of the key)
-	// this is important as we use the public key as an identifier for the provider
-	// data so we need to make sure the caller is actually in possession of the key
-	if ok, err := crypto.VerifyWithBytes([]byte(params.JSON), params.Signature, params.PublicKey); err != nil {
+	/* we verify the signature (without veryfing e.g. the provenance of the key)
+	 this is important as we use the public key as an identifier for the provider
+	 data so we need to make sure the caller is actually in possession of the key
+	*/
+	if ok, err := crypto.VerifyWithBytes(
+		[]byte(params.JSON),
+		params.Signature,
+		params.PublicKey,
+	); err != nil {
 		services.Log.Error(err)
 		return context.InternalError()
 	} else if !ok {
@@ -41,16 +49,16 @@ func (c *Appointments) storeProviderData(context services.Context, params *servi
 		return context.Error(410, "signature expired", nil)
 	}
 
-	// to do: add one-time use check
+	// TODO: add one-time use check
 
-	hash := crypto.Hash(params.PublicKey)
+	providerId := crypto.Hash(params.PublicKey)
 
 	verifiedProviderData := c.backend.VerifiedProviderData()
 	providerData := c.backend.UnverifiedProviderData()
 	codes := c.backend.Codes("provider")
 
 	existingData := false
-	if result, err := verifiedProviderData.Get(hash); err != nil {
+	if result, err := verifiedProviderData.Get(providerId); err != nil {
 		if err != databases.NotFound {
 			services.Log.Error(err)
 			return context.InternalError()
@@ -60,24 +68,31 @@ func (c *Appointments) storeProviderData(context services.Context, params *servi
 	}
 
 	if (!existingData) && c.settings.ProviderCodesEnabled {
-		notAuthorized := context.Error(401, "not authorized", nil)
 		if params.Data.Code == nil {
-			return notAuthorized
+			return context.Error(401, "not authorized", nil)
 		}
 		if ok, err := codes.Has(params.Data.Code); err != nil {
 			services.Log.Error()
 			return context.InternalError()
 		} else if !ok {
-			return notAuthorized
+			return context.Error(401, "not authorized", nil)
 		}
 	}
 
+	// aquire a lock before writing new data
+	lock, err := c.LockProvider(providerId)
+	if err != nil {
+		services.Log.Error(err)
+		return context.InternalError()
+	}
+	defer lock.Release()
+
 	rawProviderData := &services.RawProviderData{
-		ID: hash,
+		ID: providerId,
 		EncryptedData: params.Data.EncryptedData,
 	}
 
-	if err := providerData.Set(hash, rawProviderData); err != nil {
+	if err := providerData.Set(providerId, rawProviderData); err != nil {
 		services.Log.Error(err)
 		return context.InternalError()
 	}

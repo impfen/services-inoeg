@@ -20,12 +20,22 @@ package servers
 
 import (
 	"github.com/kiebitz-oss/services"
+	"github.com/kiebitz-oss/services/crypto"
 )
 
 func (c *Appointments) isValidProvider(
 	context services.Context,
 	params *services.CheckProviderDataSignedParams,
 ) services.Response {
+
+	providerId := crypto.Hash(params.PublicKey)
+
+	lock, err := c.LockProvider(providerId)
+	if err != nil {
+		services.Log.Error(err)
+		return context.InternalError()
+	}
+	defer lock.Release()
 
 	validatedErr, _ := c.isProvider(context, &services.SignedParams{
 		JSON:      params.JSON,

@@ -47,11 +47,10 @@ func (c *Appointments) getProviderAppointments(
 		return context.InternalError()
 	}
 
-	// the provider "ID" is the hash of the signing key
-	hash := crypto.Hash(pkd.Signing)
+	providerId := crypto.Hash(pkd.Signing)
 
 	// appointments are stored in a provider-specific key
-	appointmentDatesByID := c.backend.AppointmentDatesByID(hash)
+	appointmentDatesByID := c.backend.AppointmentDatesByID(providerId)
 	allDates, err := appointmentDatesByID.GetAll()
 	if err != nil {
 		services.Log.Error(err)
@@ -76,7 +75,7 @@ func (c *Appointments) getProviderAppointments(
 
 		if dateStr < dateFrom || dateStr > dateTo {continue}
 
-		appointmentsByDate := c.backend.AppointmentsByDate(hash, dateStr)
+		appointmentsByDate := c.backend.AppointmentsByDate(providerId, dateStr)
 
 		allAppointments, err := appointmentsByDate.GetAll(c.settings.Validate)
 
@@ -105,12 +104,12 @@ func (c *Appointments) getProviderAppointments(
 
 	// public provider data structure
 	publicProviderData := c.backend.PublicProviderData()
-	providerData, err := publicProviderData.Get(hash)
+	providerData, err := publicProviderData.Get(providerId)
 	if err != nil {
 		services.Log.Error(err)
 		return context.InternalError()
 	}
-	providerData.ID = hash
+	providerData.ID = providerId
 
 	providerAppointments := &services.ProviderAppointments{
 		Provider:     providerData,

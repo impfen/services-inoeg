@@ -24,7 +24,10 @@ import (
 	"time"
 )
 
-func (c *Appointments) cancelAppointment(context services.Context, params *services.CancelAppointmentSignedParams) services.Response {
+func (c *Appointments) cancelAppointment(
+	context services.Context,
+	params *services.CancelAppointmentSignedParams,
+) services.Response {
 
 	if resp := c.isUser(context, &services.SignedParams{
 		JSON:      params.JSON,
@@ -43,14 +46,29 @@ func (c *Appointments) cancelAppointment(context services.Context, params *servi
 		return context.InternalError()
 	} else {
 
-		appointmentsByDate := c.backend.AppointmentsByDate(params.Data.ProviderID, date)
+		appointmentsByDate := c.backend.AppointmentsByDate(
+			params.Data.ProviderID,
+			date,
+		)
 
-		if signedAppointment, err := appointmentsByDate.Get(c.settings.Validate, params.Data.ID); err != nil {
+		// lock the appointment before attempting to retreive it
+		lock, err := c.LockAppointment(params.Data.ID)
+		if err != nil {
+			services.Log.Error(err)
+			return context.InternalError()
+		}
+		defer lock.Release()
+
+		if signedAppointment, err := appointmentsByDate.Get(
+			c.settings.Validate,
+			params.Data.ID,
+		); err != nil {
+
 			services.Log.Errorf("Cannot get appointment by date: %v", err)
 			return context.InternalError()
+
 		} else {
 			newBookings := make([]*services.Booking, 0)
-
 			token := params.Data.SignedTokenData.Data.Token
 
 			found := false

@@ -27,14 +27,18 @@ import (
 	"github.com/kiebitz-oss/services/databases"
 )
 
-// Generates an HMAC based priority token and associated data structure.
-// As the token already gets signed with the token key it's currently a bit
-// pointless to use HMAC-based signature as the token. On the other hand this
-// makes the tokens deterministic, which can be useful to synchronize them in
-// a decentralized setup where different backends generate tokens and sign them
-// with indidivual private keys but still want to keep the priority tokens
-// deterministic. Hence, we leave this mechanism as is.
-func (c *Appointments) priorityToken() (*services.PriorityToken, string, []byte, error) {
+/* Generates an HMAC based priority token and associated data structure. As the
+token already gets signed with the token key it's currently a bit pointless to
+use HMAC-based signature as the token. On the other hand this makes the tokens
+deterministic, which can be useful to synchronize them in a decentralized setup
+where different backends generate tokens and sign them with indidivual private
+keys but still want to keep the priority tokens deterministic. Hence, we leave
+this mechanism as is.
+*/
+
+func (c *Appointments) priorityToken(
+) (*services.PriorityToken, string, []byte, error) {
+
 	token := c.backend.PriorityToken("primary")
 	if n, err := token.IncrBy(1); err != nil && err != databases.NotFound {
 		return nil, "", nil, err
@@ -57,7 +61,10 @@ func (c *Appointments) priorityToken() (*services.PriorityToken, string, []byte,
 
 //{hash, code, publicKey}
 // get a token for a given queue
-func (c *Appointments) getToken(context services.Context, params *services.GetTokenParams) services.Response {
+func (c *Appointments) getToken(
+	context services.Context,
+	params *services.GetTokenParams,
+) services.Response {
 
 	codes := c.backend.Codes("user")
 

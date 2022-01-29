@@ -25,7 +25,10 @@ import (
 	"time"
 )
 
-func (c *Appointments) isActiveProvider(context services.Context, id []byte) services.Response {
+func (c *Appointments) isActiveProvider(
+	context services.Context,
+	id []byte,
+) services.Response {
 
 	if _, err := c.backend.Keys("providers").Get(id); err != nil {
 		if err == databases.NotFound {
@@ -36,7 +39,10 @@ func (c *Appointments) isActiveProvider(context services.Context, id []byte) ser
 	return nil
 }
 
-func (c *Appointments) bookAppointment(context services.Context, params *services.BookAppointmentSignedParams) services.Response {
+func (c *Appointments) bookAppointment(
+	context services.Context,
+	params *services.BookAppointmentSignedParams,
+) services.Response {
 
 	if resp := c.isUser(context, &services.SignedParams{
 		JSON:      params.JSON,
@@ -65,18 +71,36 @@ func (c *Appointments) bookAppointment(context services.Context, params *service
 		return res
 	}
 
-	appointmentDatesByID := c.backend.AppointmentDatesByID(params.Data.ProviderID)
+	appointmentDatesByID := c.backend.AppointmentDatesByID(
+		params.Data.ProviderID,
+	)
 
 	if date, err := appointmentDatesByID.Get(params.Data.ID); err != nil {
 		services.Log.Errorf("Cannot get appointment by ID: %v", err)
 		return context.InternalError()
 	} else {
 
-		appointmentsByDate := c.backend.AppointmentsByDate(params.Data.ProviderID, date)
+		appointmentsByDate := c.backend.AppointmentsByDate(
+			params.Data.ProviderID,
+			date,
+		)
 
-		if signedAppointment, err := appointmentsByDate.Get(c.settings.Validate, params.Data.ID); err != nil {
+		// lock the appointment before attempting to retreive it
+		lock, err := c.LockAppointment(params.Data.ID)
+		if err != nil {
+			services.Log.Error(err)
+			return context.InternalError()
+		}
+		defer lock.Release()
+
+		if signedAppointment, err := appointmentsByDate.Get(
+			c.settings.Validate,
+			params.Data.ID,
+		); err != nil {
+
 			services.Log.Errorf("Cannot get appointment by date: %v", err)
 			return context.InternalError()
+
 		} else {
 			// we try to find an open slot
 			foundSlot := false
@@ -133,6 +157,8 @@ func (c *Appointments) bookAppointment(context services.Context, params *service
 
 	}
 
+	// TODO fix statistics
+	/*
 	if c.meter != nil {
 
 		now := time.Now().UTC().UnixNano()
@@ -150,6 +176,7 @@ func (c *Appointments) bookAppointment(context services.Context, params *service
 		}
 
 	}
+	*/
 
 	return context.Result(result)
 

@@ -26,7 +26,10 @@ import (
 
 // mediator-only endpoint
 // { limit }, keyPair
-func (c *Appointments) getPendingProviderData(context services.Context, params *services.GetPendingProviderDataSignedParams) services.Response {
+func (c *Appointments) getPendingProviderData(
+	context services.Context,
+	params *services.GetPendingProviderDataSignedParams,
+) services.Response {
 
 	resp, _ := c.isMediator(context, &services.SignedParams{
 		JSON:      params.JSON,
@@ -60,7 +63,5 @@ func (c *Appointments) getPendingProviderData(context services.Context, params *
 		return bytes.Compare(pdEntries[a].ID, pdEntries[b].ID) > 0
 	})
 
-
 	return context.Result(pdEntries)
-
 }

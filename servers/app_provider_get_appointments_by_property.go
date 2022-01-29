@@ -47,7 +47,6 @@ func (c *Appointments) getProviderAppointmentsByProperty(
 		return context.InternalError()
 	}
 
-	// the provider "ID" is the hash of the signing key
 	providerId := crypto.Hash(pkd.Signing)
 
 	// appointments are stored in a provider-specific key
