@@ -33,7 +33,7 @@ func (c *Appointments) isValidProvider(
 	lock, err := c.LockProvider(providerId)
 	if err != nil {
 		services.Log.Error(err)
-		return context.InternalError()
+		return LockError(context)
 	}
 	defer lock.Release()
 

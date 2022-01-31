@@ -69,3 +69,7 @@ func (c *Appointments) LockUser (
 		"Lock::User::" + toBase64(userId),
 	)
 }
+
+func LockError (context services.Context) services.Response {
+	return context.Error(503, "lock timeout", nil)
+}

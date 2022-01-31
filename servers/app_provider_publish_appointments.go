@@ -132,7 +132,7 @@ func updateOrCreateAppointment (
 	lock, err := c.LockAppointment(appointment.Data.ID)
 	if err != nil {
 		services.Log.Error(err)
-		return context.InternalError()
+		return LockError(context)
 	}
 	defer lock.Release()
 

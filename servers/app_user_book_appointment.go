@@ -82,7 +82,7 @@ func (c *Appointments) bookAppointment(
 		appLock, err := c.LockAppointment(params.Data.ID)
 		if err != nil {
 			services.Log.Error(err)
-			return context.InternalError()
+			return LockError(context)
 		}
 		defer appLock.Release()
 
@@ -122,7 +122,7 @@ func (c *Appointments) bookAppointment(
 				tokenLock, err := c.LockToken(token)
 				if err != nil {
 					services.Log.Error(err)
-					return context.InternalError()
+					return LockError(context)
 				}
 				defer tokenLock.Release()
 
