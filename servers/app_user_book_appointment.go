@@ -59,13 +59,6 @@ func (c *Appointments) bookAppointment(
 	usedTokens := c.backend.UsedTokens()
 	token := params.Data.SignedTokenData.Data.Token
 
-	if ok, err := usedTokens.Has(token); err != nil {
-		services.Log.Error(err)
-		return context.InternalError()
-	} else if ok {
-		return context.Error(401, "not authorized", nil)
-	}
-
 	// test if provider of the appointment is still active
 	if res := c.isActiveProvider(context, params.Data.ProviderID); res != nil {
 		return res
@@ -86,12 +79,12 @@ func (c *Appointments) bookAppointment(
 		)
 
 		// lock the appointment before attempting to retreive it
-		lock, err := c.LockAppointment(params.Data.ID)
+		appLock, err := c.LockAppointment(params.Data.ID)
 		if err != nil {
 			services.Log.Error(err)
 			return context.InternalError()
 		}
-		defer lock.Release()
+		defer appLock.Release()
 
 		if signedAppointment, err := appointmentsByDate.Get(
 			c.settings.Validate,
@@ -118,6 +111,20 @@ func (c *Appointments) bookAppointment(
 				if found {
 					continue
 				}
+
+				if ok, err := usedTokens.Has(token); err != nil {
+					services.Log.Error(err)
+					return context.InternalError()
+				} else if ok {
+					return context.Error(401, "not authorized", nil)
+				}
+
+				tokenLock, err := c.LockToken(token)
+				if err != nil {
+					services.Log.Error(err)
+					return context.InternalError()
+				}
+				defer tokenLock.Release()
 
 				// this slot is open, we book it!
 
