@@ -27,15 +27,9 @@ func toBase64 (bytes []byte) string {
 	return base64.RawURLEncoding.EncodeToString(bytes)
 }
 
-func (c *Appointments) LockProvider (
-	providerId []byte,
-) (services.Lock, error) {
-
-	return c.db.LockDefault(
-		"Lock::Provider::" + toBase64(providerId),
-	)
-}
-
+// appointment locks prevent concurrent changes in the appointment data (like
+// bookings) which may lead to race conditions resulting in bookings getting
+// lost
 func (c *Appointments) LockAppointment (
 	appointmentId []byte,
 ) (services.Lock, error) {
@@ -45,3 +39,33 @@ func (c *Appointments) LockAppointment (
 	)
 }
 
+// provider locks prohibit the provider and mediator to change data concurrently
+// which may lead to inconsisten data
+func (c *Appointments) LockProvider (
+	providerId []byte,
+) (services.Lock, error) {
+
+	return c.db.LockDefault(
+		"Lock::Provider::" + toBase64(providerId),
+	)
+}
+
+// token locks prevent double spending of tokens
+func (c *Appointments) LockToken (
+	token []byte,
+) (services.Lock, error) {
+
+	return c.db.LockDefault(
+		"Lock::Token::" + toBase64(token),
+	)
+}
+
+// user lock prevents race conditions when checking the token limit per user
+func (c *Appointments) LockUser (
+	userId []byte,
+) (services.Lock, error) {
+
+	return c.db.LockDefault(
+		"Lock::User::" + toBase64(userId),
+	)
+}
