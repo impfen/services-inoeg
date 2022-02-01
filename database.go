@@ -107,6 +107,7 @@ type Integer interface {
 	Object
 	Set(value int64, ttl time.Duration) error
 	IncrBy(int64) (int64, error)
+	DecrBy(int64) (int64, error)
 	Get() (int64, error)
 	Del() error
 }

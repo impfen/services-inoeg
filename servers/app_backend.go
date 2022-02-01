@@ -133,6 +133,10 @@ func (p *PriorityToken) IncrBy(value int64) (int64, error) {
 	return p.token.IncrBy(value)
 }
 
+func (p *PriorityToken) DecrBy(value int64) (int64, error) {
+	return p.token.DecrBy(value)
+}
+
 type Neighbors struct {
 	neighbors services.SortedSet
 }

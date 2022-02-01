@@ -547,6 +547,17 @@ func (r *RedisInteger) IncrBy(value int64) (int64, error) {
 	}
 }
 
+func (r *RedisInteger) DecrBy(value int64) (int64, error) {
+	if result, err := r.db.Client(r.fullKey).DecrBy(r.db.Ctx, string(r.fullKey), value).Result(); err != nil {
+		if err == redis.Nil {
+			return 0, NotFound
+		}
+		return 0, err
+	} else {
+		return result, nil
+	}
+}
+
 func (r *RedisInteger) Get() (int64, error) {
 	result, err := r.db.Client(r.fullKey).Get(r.db.Ctx, string(r.fullKey)).Result()
 	if err != nil {

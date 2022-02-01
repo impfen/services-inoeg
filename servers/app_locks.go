@@ -24,7 +24,7 @@ import (
 )
 
 func toBase64 (bytes []byte) string {
-	return base64.RawURLEncoding.EncodeToString(bytes)
+	return base64.StdEncoding.EncodeToString(bytes)
 }
 
 // appointment locks prevent concurrent changes in the appointment data (like

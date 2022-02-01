@@ -493,6 +493,16 @@ var AppointmentsForm = forms.Form{
 			},
 		},
 		{
+			Name: "max_tokens_per_user",
+			Validators: []forms.Validator{
+				forms.IsOptional{Default: 1},
+				forms.IsInteger{
+					HasMin: true,
+					Min:    1,
+				},
+			},
+		},
+		{
 			Name: "secret",
 			Validators: []forms.Validator{
 				forms.IsOptional{},

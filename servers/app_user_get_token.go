@@ -21,7 +21,9 @@ package servers
 import (
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"github.com/kiebitz-oss/services"
 	"github.com/kiebitz-oss/services/crypto"
 	"github.com/kiebitz-oss/services/databases"
@@ -36,11 +38,25 @@ keys but still want to keep the priority tokens deterministic. Hence, we leave
 this mechanism as is.
 */
 
+var maxTokensError = fmt.Errorf("max tokens exceeded")
+
 func (c *Appointments) priorityToken(
+	userID []byte,
 ) (*services.PriorityToken, string, []byte, error) {
 
+	// check that we are alowed to get another token
+	tokenNum := c.backend.PriorityToken(base64.StdEncoding.EncodeToString(userID))
+	if n, err := tokenNum.IncrBy(1); err != nil {
+		return nil, "", nil, err
+	} else {
+		if n > c.settings.MaxTokensPerUser {
+			tokenNum.DecrBy(1)
+			return nil, "", nil, maxTokensError
+		}
+	}
+
 	token := c.backend.PriorityToken("primary")
-	if n, err := token.IncrBy(1); err != nil && err != databases.NotFound {
+	if n, err := token.IncrBy(1); err != nil {
 		return nil, "", nil, err
 	} else {
 
@@ -89,9 +105,15 @@ func (c *Appointments) getToken(
 		}
 	}
 
-	if data, jsonData, token, err := c.priorityToken(); err != nil {
+	userID := params.PublicKey
+
+	if data, jsonData, token, err := c.priorityToken(userID); err != nil {
 		services.Log.Error(err)
-		return context.InternalError()
+		if err == maxTokensError {
+			context.Error(401, "maximum number of tokens exceeded", nil)
+		} else {
+			return context.InternalError()
+		}
 	} else {
 		tokenData := &services.TokenData{
 			Hash:      params.Hash,

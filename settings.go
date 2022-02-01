@@ -49,6 +49,7 @@ type AppointmentsSettings struct {
 	ResponseMaxAppointment    int64                  `json:"response_max_appointment"`
 	ResponseMinNAggregated    int64                  `json:"response_min_n_aggregated"`
 	ResponseMaxDaysAggregated int64                  `json:"response_max_days_aggregated"`
+	MaxTokensPerUser          int64                  `json:"max_tokens_per_user"`
 	Validate                  *ValidateSettings      `json:"validate"`
 }
 
