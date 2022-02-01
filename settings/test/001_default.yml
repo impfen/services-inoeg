@@ -59,6 +59,9 @@ appointments:
   # limits for the getProviderByZipCode endpoint
   response_max_provider: 10
   response_max_appointment: 10
+  # minimum results returned by the aggregated endpoint per provider
+  response_min_n_aggregated: 1000
+  response_max_days_aggregated: 7
   # additional configurable restrictions for the request forms validator
   validate:
     # minimum and maximum duration for appointments in minutes

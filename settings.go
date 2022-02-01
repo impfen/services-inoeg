@@ -35,19 +35,21 @@ type StorageSettings struct {
 }
 
 type AppointmentsSettings struct {
-	DataTTLDays              int64                  `json:"data_ttl_days,omitempty"`
-	HTTP                     *HTTPServerSettings    `json:"http,omitempty"`
-	REST                     *RESTServerSettings    `json:"rest,omitempty"`
-	JSONRPC                  *JSONRPCServerSettings `json:"jsonrpc,omitempty"`
-	Keys                     []*crypto.Key          `json:"keys,omitempty"`
-	Secret                   []byte                 `json:"secret,omitempty"`
-	ProviderCodesEnabled     bool                   `json:"provider_codes_enabled,omitempty"`
-	UserCodesEnabled         bool                   `json:"user_codes_enabled,omitempty"`
-	UserCodesReuseLimit      int64                  `json:"user_codes_reuse_limit"`
-	ProviderCodesReuseLimit  int64                  `json:"provider_codes_reuse_limit"`
-	ResponseMaxProvider      int64                  `json:"response_max_provider"`
-	ResponseMaxAppointment   int64                  `json:"response_max_appointment"`
-	Validate                 *ValidateSettings      `json:"validate"`
+	DataTTLDays               int64                  `json:"data_ttl_days,omitempty"`
+	HTTP                      *HTTPServerSettings    `json:"http,omitempty"`
+	REST                      *RESTServerSettings    `json:"rest,omitempty"`
+	JSONRPC                   *JSONRPCServerSettings `json:"jsonrpc,omitempty"`
+	Keys                      []*crypto.Key          `json:"keys,omitempty"`
+	Secret                    []byte                 `json:"secret,omitempty"`
+	ProviderCodesEnabled      bool                   `json:"provider_codes_enabled,omitempty"`
+	UserCodesEnabled          bool                   `json:"user_codes_enabled,omitempty"`
+	UserCodesReuseLimit       int64                  `json:"user_codes_reuse_limit"`
+	ProviderCodesReuseLimit   int64                  `json:"provider_codes_reuse_limit"`
+	ResponseMaxProvider       int64                  `json:"response_max_provider"`
+	ResponseMaxAppointment    int64                  `json:"response_max_appointment"`
+	ResponseMinNAggregated    int64                  `json:"response_min_n_aggregated"`
+	ResponseMaxDaysAggregated int64                  `json:"response_max_days_aggregated"`
+	Validate                  *ValidateSettings      `json:"validate"`
 }
 
 func (a *AppointmentsSettings) Key(name string) *crypto.Key {

@@ -82,7 +82,7 @@ func (c *Appointments) getAppointmentsAggregated(
 
 		appointments := make([]*services.AppointmentAggregated, 0)
 
-		for day := 0; day <= 7; day++ {
+		for day := 0; day <= int(c.settings.ResponseMaxDaysAggregated); day++ {
 
 			appointmentsByDate := c.backend.AppointmentsByDate(
 				providerID,
@@ -123,7 +123,7 @@ func (c *Appointments) getAppointmentsAggregated(
 
 			}
 
-			if len(appointments) > 25 { break }
+			if len(appointments) > int(c.settings.ResponseMinNAggregated) { break }
 		}
 
 		sort.Slice(appointments, func (a, b int) bool {

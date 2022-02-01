@@ -473,6 +473,26 @@ var AppointmentsForm = forms.Form{
 			},
 		},
 		{
+			Name: "response_min_n_aggregated",
+			Validators: []forms.Validator{
+				forms.IsOptional{Default: 1000},
+				forms.IsInteger{
+					HasMin: true,
+					Min:    1,
+				},
+			},
+		},
+		{
+			Name: "response_max_days_aggregated",
+			Validators: []forms.Validator{
+				forms.IsOptional{Default: 7},
+				forms.IsInteger{
+					HasMin: true,
+					Min:    1,
+				},
+			},
+		},
+		{
 			Name: "secret",
 			Validators: []forms.Validator{
 				forms.IsOptional{},
