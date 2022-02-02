@@ -88,7 +88,6 @@ func (a *AppointmentsBackend) UsedTokens() *UsedTokens {
 }
 
 type PriorityToken struct {
-	token services.Integer
 }
 
 func (p *PriorityToken) IncrBy(value int64) (int64, error) {
@@ -100,19 +99,19 @@ func (p *PriorityToken) DecrBy(value int64) (int64, error) {
 }
 
 type Neighbors struct {
-	neighbors services.SortedSet
+	Score int64
+	Data  []byte
 }
 
 func (n *Neighbors) Add(to string, distance int64) error {
 	return nil
 }
 
-func (n *Neighbors) Range(from, to int64) ([]*services.SortedSetEntry, error) {
+func (n *Neighbors) Range(from, to int64) ([]Neighbors, error) {
 	return nil, nil
 }
 
 type Keys struct {
-	keys services.Map
 }
 
 func (k *Keys) Set(id []byte, key *services.ActorKey) error {
@@ -128,8 +127,6 @@ func (k *Keys) GetAll() ([]*services.ActorKey, error) {
 }
 
 type Codes struct {
-	codes  services.Set
-	scores services.SortedSet
 }
 
 func (c *Codes) Has(code []byte) (bool, error) {
@@ -153,7 +150,6 @@ func (c *Codes) AddToScore(code []byte, score int64) error {
 }
 
 type ConfirmedProviderData struct {
-	dbs services.Map
 }
 
 func (c *ConfirmedProviderData) Set(providerID []byte, encryptedData *services.ConfirmedProviderData) error {
@@ -165,7 +161,6 @@ func (c *ConfirmedProviderData) Get(providerID []byte) (*services.ConfirmedProvi
 }
 
 type RawProviderData struct {
-	dbs services.Map
 }
 
 func (c *RawProviderData) Set(providerID []byte, rawData *services.RawProviderData) error {
@@ -185,7 +180,6 @@ func (c *RawProviderData) GetAll() (map[string]*services.RawProviderData, error)
 }
 
 type UsedTokens struct {
-	dbs services.Set
 }
 
 func (t *UsedTokens) Del(token []byte) error {
@@ -201,9 +195,6 @@ func (t *UsedTokens) Add(token []byte) error {
 }
 
 type AppointmentDatesByID struct {
-	providerID []byte
-	dbs        services.Map
-	db         services.Database
 }
 
 func (a *AppointmentDatesByID) GetAll() (map[string][]byte, error) {
@@ -223,9 +214,6 @@ func (a *AppointmentDatesByID) Del(id []byte) error {
 }
 
 type AppointmentDatesByProperty struct {
-	db          services.Database
-	dbs         services.Map
-	propertyKey []byte
 }
 
 func (a *AppointmentDatesByProperty) GetAll() (map[string][]byte, error) {
@@ -245,7 +233,6 @@ func (a *AppointmentDatesByProperty) Del(id []byte) error {
 }
 
 type PublicProviderData struct {
-	dbs services.Map
 }
 
 func (p *PublicProviderData) Get(id []byte) (*services.SignedProviderData, error) {
@@ -257,10 +244,6 @@ func (p *PublicProviderData) Set(id []byte, signedProviderData *services.SignedP
 }
 
 type AppointmentsByDate struct {
-	dateKey    []byte
-	dateString string
-	db         services.Database
-	dbs        services.Map
 }
 
 func (a *AppointmentsByDate) Del(id []byte) error {

@@ -19,7 +19,6 @@
 package services
 
 import (
-	"time"
 )
 
 type DatabaseDefinition struct {
@@ -56,62 +55,3 @@ type Database interface {
 type Object interface {
 }
 
-type Set interface {
-	Add([]byte) error
-	Has([]byte) (bool, error)
-	Del(key []byte) error
-	Members() ([]*SetEntry, error)
-	Object
-}
-
-type SetEntry struct {
-	Data []byte
-}
-
-type SortedSetEntry struct {
-	Score int64
-	Data  []byte
-}
-
-type SortedSet interface {
-	Object
-	Del([]byte) (bool, error)
-	Add([]byte, int64) error
-	Range(int64, int64) ([]*SortedSetEntry, error)
-	RangeByScore(int64, int64) ([]*SortedSetEntry, error)
-	At(int64) (*SortedSetEntry, error)
-	Score([]byte) (int64, error)
-	PopMin(int64) ([]*SortedSetEntry, error)
-	RemoveRangeByScore(int64, int64) error
-}
-
-type List interface {
-	Object
-}
-
-type Map interface {
-	GetAll() (map[string][]byte, error)
-	Get(key []byte) ([]byte, error)
-	Del(key []byte) error
-	Set(key []byte, value []byte) error
-	Object
-}
-
-type Integer interface {
-	Object
-	Set(value int64, ttl time.Duration) error
-	IncrBy(int64) (int64, error)
-	DecrBy(int64) (int64, error)
-	Get() (int64, error)
-	Del() error
-}
-
-type Value interface {
-	Object
-	Set(value []byte, ttl time.Duration) error
-	Get() ([]byte, error)
-	Del() error
-}
-
-type BaseDatabase struct {
-}
