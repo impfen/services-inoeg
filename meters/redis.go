@@ -19,47 +19,320 @@
 package meters
 
 import (
+	"context"
+	"errors"
 	"encoding/binary"
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	"github.com/kiebitz-oss/services"
-	"github.com/kiebitz-oss/services/databases"
+	"github.com/kiprotect/go-helpers/forms"
+	"github.com/prometheus/client_golang/prometheus"
+	"hash/fnv"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
 type Redis struct {
-	*databases.Redis
+	metricsPrefix  string
+	redisDurations *prometheus.HistogramVec
+	clients        map[uint32]redis.UniversalClient
+	pipeline       redis.Pipeliner
+	mutex          sync.Mutex
+	channel        chan bool
+	Ctx            context.Context
+}
+
+type RedisShardSettings struct {
+	Shards []RedisSettings `json:"shards"`
+}
+
+type RedisSettings struct {
+	MasterName        string   `json:"master_name"`
+	Addresses         []string `json:"addresses`
+	SentinelAddresses []string `json:"sentinel_addresses`
+	Database          int64    `json:"database"`
+	Password          string   `json:"password"`
+	SentinelUsername  string   `json:"sentinel_username"`
+	SentinelPassword  string   `json:"sentinel_password"`
+	ShardIndex        int64    `json:"shard_index"`
+}
+
+type MetricHook struct {
+	redisDurations *prometheus.HistogramVec
+}
+
+func (m MetricHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Context, error) {
+	return context.WithValue(ctx, "time", time.Now()), nil
+
+}
+
+func (m MetricHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
+	if startTime, ok := ctx.Value("time").(time.Time); ok {
+		elapsedTime := time.Since(startTime)
+		m.redisDurations.WithLabelValues(cmd.Name()).Observe(elapsedTime.Seconds())
+	} else {
+		services.Log.Warning("Context without time value found, something is broken within the metric instrumentation")
+	}
+
+	return nil
+}
+
+func (m MetricHook) BeforeProcessPipeline(ctx context.Context, cmds []redis.Cmder) (context.Context, error) {
+	return ctx, nil
+}
+
+func (m MetricHook) AfterProcessPipeline(ctx context.Context, cmds []redis.Cmder) error {
+	return nil
+}
+
+var RedisForm = forms.Form{
+	ErrorMsg: "invalid data encountered in the Redis config form",
+	Fields: []forms.Field{
+		{
+			Name: "addresses",
+			Validators: []forms.Validator{
+				forms.IsOptional{Default: []string{}},
+				forms.IsStringList{},
+			},
+		},
+		{
+			Name: "sentinel_addresses",
+			Validators: []forms.Validator{
+				forms.IsOptional{Default: []string{}},
+				forms.IsStringList{},
+			},
+		},
+		{
+			Name: "master_name",
+			Validators: []forms.Validator{
+				forms.IsOptional{Default: ""},
+				forms.IsString{},
+			},
+		},
+		{
+			Name: "database",
+			Validators: []forms.Validator{
+				forms.IsOptional{Default: 0},
+				forms.IsInteger{Min: 0, Max: 100},
+			},
+		},
+		{
+			Name: "password",
+			Validators: []forms.Validator{
+				forms.IsRequired{},
+				forms.IsString{},
+			},
+		},
+		{
+			Name: "sentinel_username",
+			Validators: []forms.Validator{
+				forms.IsOptional{},
+				forms.IsString{},
+			},
+		},
+		{
+			Name: "sentinel_password",
+			Validators: []forms.Validator{
+				forms.IsOptional{},
+				forms.IsString{},
+			},
+		},
+		{
+			Name: "shard_index",
+			Validators: []forms.Validator{
+				forms.IsOptional{Default: 0},
+				forms.IsInteger{},
+			},
+		},
+	},
+}
+var RedisShardForm = forms.Form{
+	ErrorMsg: "invalid data encountered in the Redis config form",
+	Fields: []forms.Field{
+		{
+			Name: "shards",
+			Validators: []forms.Validator{
+				forms.IsList{
+					Validators: []forms.Validator{
+						forms.IsStringMap{Form: &RedisForm},
+					},
+				},
+			},
+		},
+	},
+}
+
+func ValidateRedisSettings(settings map[string]interface{}) (interface{}, error) {
+	if params, err := RedisForm.Validate(settings); err != nil {
+		return nil, err
+	} else {
+		redisSettings := &RedisSettings{}
+		if err := RedisForm.Coerce(redisSettings, params); err != nil {
+			return nil, err
+		}
+		return redisSettings, nil
+	}
+}
+
+func ValidateRedisShardSettings(settings map[string]interface{}) (interface{}, error) {
+	if params, err := RedisShardForm.Validate(settings); err != nil {
+		return nil, err
+	} else {
+		redisSettings := &RedisShardSettings{}
+		if err := RedisForm.Coerce(redisSettings, params); err != nil {
+			return nil, err
+		}
+		return redisSettings, nil
+	}
+}
+func MakeRedisClient(settings interface{}) (redis.UniversalClient, uint32, error) {
+	redisSettings := settings.(RedisSettings)
+
+	var client redis.UniversalClient
+
+	if len(redisSettings.Addresses) > 0 {
+		options := redis.UniversalOptions{
+			MasterName:   redisSettings.MasterName,
+			Password:     redisSettings.Password,
+			ReadTimeout:  time.Second * 1.0,
+			WriteTimeout: time.Second * 1.0,
+			Addrs:        redisSettings.Addresses,
+			DB:           int(redisSettings.Database),
+		}
+
+		client = redis.NewUniversalClient(&options)
+
+		services.Log.Info("Creating redis connection")
+
+	} else if len(redisSettings.SentinelAddresses) > 0 {
+		options := redis.FailoverOptions{
+			MasterName:       redisSettings.MasterName,
+			Password:         redisSettings.Password,
+			ReadTimeout:      time.Second * 1.0,
+			WriteTimeout:     time.Second * 1.0,
+			DB:               int(redisSettings.Database),
+			SentinelAddrs:    redisSettings.SentinelAddresses,
+			SentinelUsername: redisSettings.SentinelUsername,
+			SentinelPassword: redisSettings.SentinelPassword,
+		}
+
+		client = redis.NewFailoverClient(&options)
+
+		services.Log.Info("Creating sentinel-based redis connection")
+	} else {
+		return nil, 0, errors.New("invalid database configuration, needed addresses or sentinelAddresses")
+	}
+
+	return client, uint32(redisSettings.ShardIndex), nil
 }
 
 func MakeRedisShards(settings interface{}) (services.Meter, error) {
+	redisShardSettings := settings.(RedisShardSettings)
+	ctx := context.TODO()
 
-	redisClient, err := databases.MakeRedisShards(settings)
-	if err != nil {
-		return nil, err
-	}
-	meter := &Redis{
-		redisClient,
+	clients := map[uint32]redis.UniversalClient{}
+
+	for _, redisSettings := range redisShardSettings.Shards {
+		client, shardIndex, err := MakeRedisClient(redisSettings)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if _, err := client.Ping(ctx).Result(); err != nil {
+			return nil, err
+		}
+
+		clients[shardIndex] = client
 	}
 
-	return meter, nil
+	services.Log.Info("Creating redis-shard database")
+
+	database := &Redis{
+		clients: clients,
+		channel: make(chan bool),
+		Ctx:     ctx,
+	}
+
+	return database, nil
 }
 
 func MakeRedis(settings interface{}) (services.Meter, error) {
+	ctx := context.TODO()
 
-	redisClient, err := databases.MakeRedis(settings)
+	client, shardIndex, err := MakeRedisClient(settings)
+
 	if err != nil {
 		return nil, err
 	}
 
-	meter := &Redis{
-		redisClient,
+	if _, err := client.Ping(ctx).Result(); err != nil {
+		return nil, err
 	}
 
-	return meter, nil
+	services.Log.Info("Creating redis database")
+
+	clients := make(map[uint32]redis.UniversalClient)
+	clients[shardIndex] = client
+
+	database := &Redis{
+		clients: clients,
+		channel: make(chan bool),
+		Ctx:     ctx,
+	}
+
+	return database, nil
+}
+
+func (d *Redis) getShardForKey(key string) uint32 {
+	f := fnv.New32()
+	f.Write([]byte(key))
+	hashNum := f.Sum32()
+	return hashNum % uint32(len(d.clients))
+}
+
+func (d *Redis) Client(key string) redis.UniversalClient {
+	shard_index := d.getShardForKey(key)
+	return d.clients[shard_index]
+}
+
+func (d *Redis) Open() error {
+	d.redisDurations = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "redis_durations_seconds",
+			Help:    "Redis command durations",
+			Buckets: []float64{0, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0, 2.0},
+		},
+		[]string{"command"},
+	)
+
+	if err := prometheus.Register(d.redisDurations); err != nil {
+		return err
+	}
+
+	metricHook := MetricHook{redisDurations: d.redisDurations}
+
+	for _, client := range d.clients {
+		client.AddHook(metricHook)
+	}
+
+	return nil
+}
+
+func (d *Redis) Close() error {
+	prometheus.Unregister(d.redisDurations)
+	for _, client := range d.clients {
+		err := client.Close()
+
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 var paramsRegex = regexp.MustCompile(`^([^\()]+)\((.*)\)$`)

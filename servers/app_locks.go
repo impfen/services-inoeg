@@ -19,8 +19,8 @@
 package servers
 
 import (
-	"encoding/base64"
 	"github.com/kiebitz-oss/services"
+	"encoding/base64"
 )
 
 func toBase64 (bytes []byte) string {
@@ -33,10 +33,7 @@ func toBase64 (bytes []byte) string {
 func (c *Appointments) LockAppointment (
 	appointmentId []byte,
 ) (services.Lock, error) {
-
-	return c.db.LockDefault(
-		"Lock::Appointment::" + toBase64(appointmentId),
-	)
+	return nil, nil
 }
 
 // provider locks prohibit the provider and mediator to change data concurrently
@@ -44,30 +41,21 @@ func (c *Appointments) LockAppointment (
 func (c *Appointments) LockProvider (
 	providerId []byte,
 ) (services.Lock, error) {
-
-	return c.db.LockDefault(
-		"Lock::Provider::" + toBase64(providerId),
-	)
+	return nil, nil
 }
 
 // token locks prevent double spending of tokens
 func (c *Appointments) LockToken (
 	token []byte,
 ) (services.Lock, error) {
-
-	return c.db.LockDefault(
-		"Lock::Token::" + toBase64(token),
-	)
+	return nil, nil
 }
 
 // user lock prevents race conditions when checking the token limit per user
 func (c *Appointments) LockUser (
 	userId []byte,
 ) (services.Lock, error) {
-
-	return c.db.LockDefault(
-		"Lock::User::" + toBase64(userId),
-	)
+	return nil, nil
 }
 
 func LockError (context services.Context) services.Response {

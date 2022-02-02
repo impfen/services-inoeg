@@ -19,11 +19,10 @@
 package servers
 
 import (
-	"encoding/json"
-	"fmt"
+	//"encoding/json"
 	"github.com/kiebitz-oss/services"
-	"github.com/kiebitz-oss/services/forms"
-	"time"
+	//"github.com/kiebitz-oss/services/forms"
+	//"time"
 )
 
 // The appointments backend acts as an interface between the API and the
@@ -34,76 +33,46 @@ type AppointmentsBackend struct {
 }
 
 func (a *AppointmentsBackend) Neighbors(neighborType, zipCode string) *Neighbors {
-	return &Neighbors{
-		neighbors: a.db.SortedSet(fmt.Sprintf("distances::neighbors::%s", neighborType), []byte(zipCode)),
-	}
+	return nil
 }
 
 func (a *AppointmentsBackend) PriorityToken(name string) *PriorityToken {
-	return &PriorityToken{
-		token: a.db.Integer("priorityToken", []byte(name)),
-	}
+	return nil
 }
 
 func (a *AppointmentsBackend) Keys(actor string) *Keys {
-	return &Keys{
-		keys: a.db.Map("keys", []byte(actor)),
-	}
+	return nil
 }
 
 func (a *AppointmentsBackend) Codes(actor string) *Codes {
-	return &Codes{
-		codes:  a.db.Set("codes", []byte(actor)),
-		scores: a.db.SortedSet("codeScores", []byte(actor)),
-	}
+	return nil
 }
 
 func (a *AppointmentsBackend) PublicProviderData() *PublicProviderData {
-	return &PublicProviderData{
-		dbs: a.db.Map("providerData", []byte("public")),
-	}
+	return nil
 }
 
 func (a *AppointmentsBackend) ConfirmedProviderData() *ConfirmedProviderData {
-	return &ConfirmedProviderData{
-		dbs: a.db.Map("providerData", []byte("confirmed")),
-	}
+	return nil
 }
 
 func (a *AppointmentsBackend) UnverifiedProviderData() *RawProviderData {
-	return &RawProviderData{
-		dbs: a.db.Map("providerData", []byte("unverified")),
-	}
+	return nil
 }
 
 func (a *AppointmentsBackend) VerifiedProviderData() *RawProviderData {
-	return &RawProviderData{
-		dbs: a.db.Map("providerData", []byte("verified")),
-	}
+	return nil
 }
 
 func (a *AppointmentsBackend) AppointmentsByDate(
 	providerID []byte,
 	date string,
 ) *AppointmentsByDate {
-
-	dateKey := append([]byte(date + "::" ), providerID...)
-
-	return &AppointmentsByDate{
-		dateKey:    dateKey,
-		dateString: date,
-		db:         a.db,
-		dbs:        a.db.Map("appointmentsByDate", dateKey),
-	}
-
+	return nil
 }
 
 func (a *AppointmentsBackend) AppointmentDatesByID(providerID []byte) *AppointmentDatesByID {
-	return &AppointmentDatesByID{
-		providerID: providerID,
-		db:         a.db,
-		dbs:        a.db.Map("appointmentDatesByID", providerID),
-	}
+	return nil
 }
 
 func (a *AppointmentsBackend) AppointmentDatesByProperty(
@@ -111,18 +80,11 @@ func (a *AppointmentsBackend) AppointmentDatesByProperty(
 	key string,
 	value string,
 ) *AppointmentDatesByProperty {
-	propertyKey := append([]byte(key + "::" + value + "::"), providerID...)
-	return &AppointmentDatesByProperty{
-		db:          a.db,
-		dbs:         a.db.Map("appointmentDatesByProperty", propertyKey),
-		propertyKey: propertyKey,
-	}
+	return nil
 }
 
 func (a *AppointmentsBackend) UsedTokens() *UsedTokens {
-	return &UsedTokens{
-		dbs: a.db.Set("bookings", []byte("tokens")),
-	}
+	return nil
 }
 
 type PriorityToken struct {
@@ -130,11 +92,11 @@ type PriorityToken struct {
 }
 
 func (p *PriorityToken) IncrBy(value int64) (int64, error) {
-	return p.token.IncrBy(value)
+	return 0, nil
 }
 
 func (p *PriorityToken) DecrBy(value int64) (int64, error) {
-	return p.token.DecrBy(value)
+	return 0, nil
 }
 
 type Neighbors struct {
@@ -142,11 +104,11 @@ type Neighbors struct {
 }
 
 func (n *Neighbors) Add(to string, distance int64) error {
-	return n.neighbors.Add([]byte(to), distance)
+	return nil
 }
 
 func (n *Neighbors) Range(from, to int64) ([]*services.SortedSetEntry, error) {
-	return n.neighbors.Range(from, to)
+	return nil, nil
 }
 
 type Keys struct {
@@ -154,48 +116,15 @@ type Keys struct {
 }
 
 func (k *Keys) Set(id []byte, key *services.ActorKey) error {
-	if data, err := json.Marshal(key); err != nil {
-		return err
-	} else {
-		return k.keys.Set(id, data)
-	}
+	return nil
 }
 
 func (k *Keys) Get(id []byte) (*services.ActorKey, error) {
-	if mk, err := k.keys.Get(id); err != nil {
-		return nil, err
-	} else {
-		var key *services.ActorKey
-		if err := json.Unmarshal(mk, &key); err != nil {
-			return nil, err
-		} else {
-			return key, nil
-		}
-	}
+	return nil, nil
 }
 
 func (k *Keys) GetAll() ([]*services.ActorKey, error) {
-
-	mk, err := k.keys.GetAll()
-
-	if err != nil {
-		return nil, err
-	}
-
-	actorKeys := []*services.ActorKey{}
-
-	for id, v := range mk {
-		var m *services.ActorKey
-		if err := json.Unmarshal(v, &m); err != nil {
-			return nil, err
-		} else {
-			m.ID = []byte(id)
-			actorKeys = append(actorKeys, m)
-		}
-	}
-
-	return actorKeys, nil
-
+	return nil, nil
 }
 
 type Codes struct {
@@ -204,23 +133,23 @@ type Codes struct {
 }
 
 func (c *Codes) Has(code []byte) (bool, error) {
-	return c.codes.Has(code)
+	return false, nil
 }
 
 func (c *Codes) Add(code []byte) error {
-	return c.codes.Add(code)
+	return nil
 }
 
 func (c *Codes) Del(code []byte) error {
-	return c.codes.Del(code)
+	return nil
 }
 
 func (c *Codes) Score(code []byte) (int64, error) {
-	return c.scores.Score(code)
+	return 0, nil
 }
 
 func (c *Codes) AddToScore(code []byte, score int64) error {
-	return c.scores.Add(code, score)
+	return nil
 }
 
 type ConfirmedProviderData struct {
@@ -228,29 +157,11 @@ type ConfirmedProviderData struct {
 }
 
 func (c *ConfirmedProviderData) Set(providerID []byte, encryptedData *services.ConfirmedProviderData) error {
-	if data, err := json.Marshal(encryptedData); err != nil {
-		return err
-	} else {
-		return c.dbs.Set(providerID, data)
-	}
+	return nil
 }
 
 func (c *ConfirmedProviderData) Get(providerID []byte) (*services.ConfirmedProviderData, error) {
-	if data, err := c.dbs.Get(providerID); err != nil {
-		return nil, err
-	} else {
-		var mapData map[string]interface{}
-		encryptedData := &services.ConfirmedProviderData{}
-		if err := json.Unmarshal(data, &mapData); err != nil {
-			return nil, err
-		} else if params, err := forms.ConfirmedProviderDataForm.Validate(mapData); err != nil {
-			return nil, err
-		} else if err := forms.ConfirmedProviderDataForm.Coerce(encryptedData, params); err != nil {
-			return nil, err
-		} else {
-			return encryptedData, nil
-		}
-	}
+	return nil, nil
 }
 
 type RawProviderData struct {
@@ -258,55 +169,19 @@ type RawProviderData struct {
 }
 
 func (c *RawProviderData) Set(providerID []byte, rawData *services.RawProviderData) error {
-	if data, err := json.Marshal(rawData); err != nil {
-		return err
-	} else {
-		return c.dbs.Set(providerID, data)
-	}
+	return nil
 }
 
 func (c *RawProviderData) Del(providerID []byte) error {
-	return c.dbs.Del(providerID)
+	return nil
 }
 
 func (c *RawProviderData) Get(providerID []byte) (*services.RawProviderData, error) {
-	if data, err := c.dbs.Get(providerID); err != nil {
-		return nil, err
-	} else {
-		var mapData map[string]interface{}
-		rawData := &services.RawProviderData{}
-		if err := json.Unmarshal(data, &mapData); err != nil {
-			return nil, err
-		} else if params, err := forms.RawProviderDataForm.Validate(mapData); err != nil {
-			return nil, err
-		} else if err := forms.RawProviderDataForm.Coerce(rawData, params); err != nil {
-			return nil, err
-		} else {
-			return rawData, nil
-		}
-	}
+	return nil, nil
 }
 
 func (c *RawProviderData) GetAll() (map[string]*services.RawProviderData, error) {
-	if dataMap, err := c.dbs.GetAll(); err != nil {
-		return nil, err
-	} else {
-		providerDataMap := map[string]*services.RawProviderData{}
-		for id, data := range dataMap {
-			var mapData map[string]interface{}
-			rawData := &services.RawProviderData{}
-			if err := json.Unmarshal(data, &mapData); err != nil {
-				return nil, err
-			} else if params, err := forms.RawProviderDataForm.Validate(mapData); err != nil {
-				return nil, err
-			} else if err := forms.RawProviderDataForm.Coerce(rawData, params); err != nil {
-				return nil, err
-			} else {
-				providerDataMap[id] = rawData
-			}
-		}
-		return providerDataMap, nil
-	}
+	return nil, nil
 }
 
 type UsedTokens struct {
@@ -314,15 +189,15 @@ type UsedTokens struct {
 }
 
 func (t *UsedTokens) Del(token []byte) error {
-	return t.dbs.Del(token)
+	return nil
 }
 
 func (t *UsedTokens) Has(token []byte) (bool, error) {
-	return t.dbs.Has(token)
+	return false, nil
 }
 
 func (t *UsedTokens) Add(token []byte) error {
-	return t.dbs.Add(token)
+	return nil
 }
 
 type AppointmentDatesByID struct {
@@ -332,28 +207,19 @@ type AppointmentDatesByID struct {
 }
 
 func (a *AppointmentDatesByID) GetAll() (map[string][]byte, error) {
-	return a.dbs.GetAll()
+	return nil, nil
 }
 
 func (a *AppointmentDatesByID) Get(id []byte) (string, error) {
-	if data, err := a.dbs.Get(id); err != nil {
-		return "", err
-	} else {
-		return string(data), nil
-	}
+	return "", nil
 }
 
 func (a *AppointmentDatesByID) Set(id []byte, date string) error {
-	// ID map will auto-delete after one year (purely for storage reasons, it does not contain sensitive data)
-	setErr := a.dbs.Set(id, []byte(date))
-	if err := a.db.Expire("appointmentDatesByID", a.providerID, time.Hour*24*365); err != nil {
-		return err
-	}
-	return setErr
+	return nil
 }
 
 func (a *AppointmentDatesByID) Del(id []byte) error {
-	return a.dbs.Del(id)
+	return nil
 }
 
 type AppointmentDatesByProperty struct {
@@ -363,31 +229,19 @@ type AppointmentDatesByProperty struct {
 }
 
 func (a *AppointmentDatesByProperty) GetAll() (map[string][]byte, error) {
-	return a.dbs.GetAll()
+	return nil, nil
 }
 
 func (a *AppointmentDatesByProperty) Get(id []byte) (string, error) {
-	if data, err := a.dbs.Get(id); err != nil {
-		return "", err
-	} else {
-		return string(data), nil
-	}
+	return "", nil
 }
 
 func (a *AppointmentDatesByProperty) Set(appId []byte, date string) error {
-	// ID map will auto-delete after one year (purely for storage reasons, it does not contain sensitive data)
-	setErr := a.dbs.Set(appId, []byte(date))
-	err := a.db.Expire(
-		"appointmentDatesByProperty",
-		a.propertyKey,
-		time.Hour*24*365,
-	)
-	if err != nil { return err }
-	return setErr
+	return nil
 }
 
 func (a *AppointmentDatesByProperty) Del(id []byte) error {
-	return a.dbs.Del(id)
+	return nil
 }
 
 type PublicProviderData struct {
@@ -395,21 +249,11 @@ type PublicProviderData struct {
 }
 
 func (p *PublicProviderData) Get(id []byte) (*services.SignedProviderData, error) {
-	if data, err := p.dbs.Get(id); err != nil {
-		return nil, err
-	} else if signedProviderData, err := SignedProviderData(data); err != nil {
-		return nil, err
-	} else {
-		return signedProviderData, nil
-	}
+	return nil, nil
 }
 
 func (p *PublicProviderData) Set(id []byte, signedProviderData *services.SignedProviderData) error {
-	if data, err := json.Marshal(signedProviderData); err != nil {
-		return err
-	} else {
-		return p.dbs.Set(id, data)
-	}
+	return nil
 }
 
 type AppointmentsByDate struct {
@@ -420,53 +264,17 @@ type AppointmentsByDate struct {
 }
 
 func (a *AppointmentsByDate) Del(id []byte) error {
-	return a.dbs.Del(id)
+	return nil
 }
 
 func (a *AppointmentsByDate) Set(appointment *services.SignedAppointment) error {
-
-	date, dateErr := time.Parse("2006-01-02", a.dateString)
-	if dateErr != nil { return dateErr }
-	expireAt := date.AddDate(0,0,2) // add two days
-
-	if data, err := json.Marshal(appointment); err != nil {
-		return err
-	} else {
-		setErr := a.dbs.Set(appointment.Data.ID, data)
-		if err := a.db.ExpireAt("appointmentsByDate", a.dateKey, expireAt); err != nil {
-			return err
-		}
-		return setErr
-	}
+	return nil
 }
 
 func (a *AppointmentsByDate) Get(validateSettings *services.ValidateSettings, id []byte) (*services.SignedAppointment, error) {
-	if appointmentData, err := a.dbs.Get(id); err != nil {
-		return nil, err
-	} else {
-		if signedAppointment, err := SignedAppointment(validateSettings, appointmentData); err != nil {
-			return nil, err
-		} else {
-			return signedAppointment, nil
-		}
-	}
+	return nil, nil
 }
 
 func (a *AppointmentsByDate) GetAll(validateSettings *services.ValidateSettings) (map[string]*services.SignedAppointment, error) {
-
-	signedAppointments := make(map[string]*services.SignedAppointment)
-
-	if allAppointments, err := a.dbs.GetAll(); err != nil {
-		return nil, err
-	} else {
-		for id, appointmentData := range allAppointments {
-			if signedAppointment, err := SignedAppointment(validateSettings, appointmentData); err != nil {
-				return nil, err
-			} else {
-				signedAppointments[id] = signedAppointment
-			}
-		}
-
-		return signedAppointments, nil
-	}
+	return nil, nil
 }

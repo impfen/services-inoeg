@@ -21,23 +21,20 @@ package servers
 import (
 	"encoding/json"
 	"github.com/kiebitz-oss/services"
-	"time"
 )
 
 // store the settings in the database by ID
-func (c *Storage) storeSettings(
+func (s *Storage) storeSettings(
 	context services.Context,
 	params *services.StoreSettingsParams,
 ) services.Response {
 
-	ttl := time.Duration(c.settings.SettingsTTLDays*24)*time.Hour
-	value := c.db.Value("settings", params.ID)
-
 	if dv, err := json.Marshal(params.Data); err != nil {
 		services.Log.Error(err)
 		return context.InternalError()
-	} else if err := value.Set(dv, ttl); err != nil {
+	} else if err := s.backend.storeSettings(params.ID, dv); err != nil {
 		return context.InternalError()
 	}
+
 	return context.Acknowledge()
 }

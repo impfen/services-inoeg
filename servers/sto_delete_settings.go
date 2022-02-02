@@ -22,9 +22,12 @@ import (
 	"github.com/kiebitz-oss/services"
 )
 
-func (c *Storage) deleteSettings(context services.Context, params *services.GetSettingsParams) services.Response {
-	value := c.db.Value("settings", params.ID)
-	if err := value.Del(); err != nil {
+func (s *Storage) deleteSettings(
+	context services.Context,
+	params *services.GetSettingsParams,
+) services.Response {
+
+	if err := s.backend.deleteSettings(params.ID); err != nil {
 		services.Log.Error(err)
 		return context.InternalError()
 	}

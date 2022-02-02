@@ -13,11 +13,9 @@ meter:
 # database settings for appointments and user data
 database:
   name: db
-  type: redis
+  type: postgresql
   settings:
-    addresses: [ "localhost:6379" ]
-    database: 2
-    password: ""
+    connection_string: "host=localhost port=5432 dbname=impfen user=impfen"
 metrics:
   bind_address: "localhost:9091"
 

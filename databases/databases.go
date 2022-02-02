@@ -23,22 +23,18 @@ import (
 )
 
 var Databases = services.DatabaseDefinitions{
-	"redis": services.DatabaseDefinition{
-		Name:              "Redis Database",
-		Description:       "For Production Use",
-		Maker:             MakeRedisAsDatabase,
-		SettingsValidator: ValidateRedisSettings,
+	"postgresql": services.DatabaseDefinition{
+		Name:              "PostgreSQL database",
+		Description:       "realtional database for production use",
+		Maker:             MakePostgreSQL,
+		SettingsValidator: ValidatePostgeSQLSettings,
 	},
-	"redis-shard": services.DatabaseDefinition{
-		Name:              "Redis Sharded Database",
-		Description:       "For Production Use",
-		Maker:             MakeRedisShardAsDatabase,
-		SettingsValidator: ValidateRedisShardSettings,
+	/* TODO
+	"sqlite": services.DatabaseDefinition{
+		Name:              "SQLite",
+		Description:       "A light weight dbms which can be run in memory",
+		Maker:             MakeSQLite,
+		SettingsValidator: ValidateSQLiteSettings,
 	},
-	"in-memory": services.DatabaseDefinition{
-		Name:              "In-memory Database (no persistence! just use for testing)",
-		Description:       "An in-memory database for testing only",
-		Maker:             MakeInMemory,
-		SettingsValidator: ValidateInMemorySettings,
-	},
+	*/
 }

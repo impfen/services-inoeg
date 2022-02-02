@@ -26,8 +26,9 @@ import (
 
 type Storage struct {
 	*Server
-	settings *services.StorageSettings
+	backend  *StorageBackend
 	db       services.Database
+	settings *services.StorageSettings
 	test     bool
 }
 
@@ -35,6 +36,7 @@ func MakeStorage(settings *services.Settings) (*Storage, error) {
 
 	storage := &Storage{
 		db:       settings.DatabaseObj,
+		backend:  &StorageBackend{db: settings.DatabaseObj},
 		settings: settings.Storage,
 		test:     settings.Test,
 	}

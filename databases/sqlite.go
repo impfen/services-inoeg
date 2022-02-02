@@ -16,37 +16,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package servers
+package databases
 
 import (
-	"github.com/kiebitz-oss/services"
 )
 
-func (s *Storage) resetDB(
-	context services.Context,
-	params *services.ResetDBSignedParams,
-) services.Response {
-
-	if resp := s.isRoot(context, &services.SignedParams{
-		JSON:      params.JSON,
-		Signature: params.Signature,
-		PublicKey: params.PublicKey,
-		Timestamp: params.Data.Timestamp,
-	}); resp != nil {
-		return resp
-	}
-
-	if !s.test {
-		services.Log.Warning("Database reset requested on production database!")
-		context.Error(400, "not a test system, will not reset database...", nil)
-	}
-
-	services.Log.Warning("Database reset requested!")
-
-	if err := s.backend.reset(); err != nil {
-		services.Log.Error(err)
-		return context.InternalError()
-	}
-
-	return context.Acknowledge()
-}
+// TODO

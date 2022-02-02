@@ -22,31 +22,22 @@ import (
 	"github.com/kiebitz-oss/services"
 )
 
-func (s *Storage) resetDB(
-	context services.Context,
-	params *services.ResetDBSignedParams,
-) services.Response {
+type StorageBackend struct {
+	db services.Database
+}
 
-	if resp := s.isRoot(context, &services.SignedParams{
-		JSON:      params.JSON,
-		Signature: params.Signature,
-		PublicKey: params.PublicKey,
-		Timestamp: params.Data.Timestamp,
-	}); resp != nil {
-		return resp
-	}
+func (s *StorageBackend) deleteSettings (id []byte) error {
+	return s.db.SettingsDelete(toBase64(id))
+}
 
-	if !s.test {
-		services.Log.Warning("Database reset requested on production database!")
-		context.Error(400, "not a test system, will not reset database...", nil)
-	}
+func (s *StorageBackend) getSettings (id []byte) ([]byte, error) {
+	return s.db.SettingsGet(toBase64(id))
+}
 
-	services.Log.Warning("Database reset requested!")
+func (s *StorageBackend) reset () error {
+	return s.db.SettingsReset()
+}
 
-	if err := s.backend.reset(); err != nil {
-		services.Log.Error(err)
-		return context.InternalError()
-	}
-
-	return context.Acknowledge()
+func (s *StorageBackend) storeSettings (id, data []byte) error {
+	return s.db.SettingsStore(toBase64(id), data)
 }
