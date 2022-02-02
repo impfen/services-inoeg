@@ -23,6 +23,10 @@ import (
 	"encoding/base64"
 )
 
+type Lock interface {
+	Release() error
+}
+
 func toBase64 (bytes []byte) string {
 	return base64.StdEncoding.EncodeToString(bytes)
 }
@@ -32,7 +36,7 @@ func toBase64 (bytes []byte) string {
 // lost
 func (c *Appointments) LockAppointment (
 	appointmentId []byte,
-) (services.Lock, error) {
+) (Lock, error) {
 	return nil, nil
 }
 
@@ -40,21 +44,21 @@ func (c *Appointments) LockAppointment (
 // which may lead to inconsisten data
 func (c *Appointments) LockProvider (
 	providerId []byte,
-) (services.Lock, error) {
+) (Lock, error) {
 	return nil, nil
 }
 
 // token locks prevent double spending of tokens
 func (c *Appointments) LockToken (
 	token []byte,
-) (services.Lock, error) {
+) (Lock, error) {
 	return nil, nil
 }
 
 // user lock prevents race conditions when checking the token limit per user
 func (c *Appointments) LockUser (
 	userId []byte,
-) (services.Lock, error) {
+) (Lock, error) {
 	return nil, nil
 }
 

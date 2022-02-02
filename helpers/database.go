@@ -29,8 +29,6 @@ func InitializeDatabase(settings *services.Settings) (services.Database, error) 
 	definition := settings.Definitions.DatabaseDefinitions[settings.Database.Type]
 	if db, err := definition.Maker(settings.Database.Settings); err != nil {
 		return nil, err
-	} else if err := db.Open(); err != nil {
-		return nil, err
 	} else {
 		return db, nil
 	}

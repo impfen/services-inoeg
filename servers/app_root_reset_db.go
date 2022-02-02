@@ -22,7 +22,10 @@ import (
 	"github.com/kiebitz-oss/services"
 )
 
-func (a *Appointments) resetDB(context services.Context, params *services.ResetDBSignedParams) services.Response {
+func (a *Appointments) resetDB(
+	context services.Context,
+	params *services.ResetDBSignedParams,
+) services.Response {
 
 	if resp := a.isRoot(context, &services.SignedParams{
 		JSON:      params.JSON,
@@ -34,12 +37,13 @@ func (a *Appointments) resetDB(context services.Context, params *services.ResetD
 	}
 
 	if !a.test {
+		services.Log.Warning("Database reset requested on production database!")
 		context.Error(400, "not a test system, will not reset database...", nil)
 	}
 
 	services.Log.Warning("Database reset requested!")
 
-	if err := a.db.Reset(); err != nil {
+	if err := a.db.AppointmentsReset(); err != nil {
 		services.Log.Error(err)
 		return context.InternalError()
 	}

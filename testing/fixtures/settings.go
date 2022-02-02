@@ -51,7 +51,7 @@ func (c Settings) Setup(fixtures map[string]interface{}) (interface{}, error) {
 		return nil, err
 	} else {
 		if db != nil {
-			if err := db.Reset(); err != nil {
+			if err := db.AppointmentsReset(); err != nil {
 				return nil, err
 			}
 		}

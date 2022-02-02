@@ -74,17 +74,13 @@ func MakePostgreSQL(settings interface{}) (services.Database, error) {
 
 var _ services.Database = &PostgreSQL{}
 
-func (d *PostgreSQL) Reset() error {
-	return nil
-}
-
 func (d *PostgreSQL) Close() error {
 	services.Log.Info("Closing connection to PostgreSQL DBMS")
 	d.pool.Close()
 	return nil
 }
 
-func (d *PostgreSQL) Open() error {
+func (d *PostgreSQL) AppointmentsReset () error {
 	return nil
 }
 

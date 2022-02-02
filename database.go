@@ -33,22 +33,16 @@ type DatabaseDefinitions map[string]DatabaseDefinition
 type DatabaseMaker func(settings interface{}) (Database, error)
 
 type DatabaseOps interface {
+	AppointmentsReset() error
 	SettingsDelete(id string) error
 	SettingsGet(id string) ([]byte, error)
 	SettingsReset() error
 	SettingsStore(id string, data []byte) error
 }
 
-type Lock interface {
-	Release() error
-}
-
 // A database can deliver and accept message
 type Database interface {
 	Close() error
-	Open() error
-	Reset() error
-
 	DatabaseOps
 }
 
