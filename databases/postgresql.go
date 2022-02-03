@@ -21,11 +21,24 @@ package databases
 import (
 	"context"
 	//"crypto/sha256"
+	"encoding/base64"
 	pg "github.com/jackc/pgx/v4/pgxpool"
 	"github.com/jackc/pgx/v4"
 	"github.com/kiebitz-oss/services"
 	"github.com/kiprotect/go-helpers/forms"
 )
+
+func toBase64 (bytes []byte) string {
+	return base64.StdEncoding.EncodeToString(bytes)
+}
+
+func fromBase64 (str string) []byte {
+	if res, err := base64.StdEncoding.DecodeString(str); err != nil {
+		return []byte{}
+	} else {
+		return res
+	}
+}
 
 type PostgreSQL struct {
 	ctx  context.Context
@@ -81,7 +94,60 @@ func (d *PostgreSQL) Close() error {
 }
 
 func (d *PostgreSQL) AppointmentsReset () error {
-	return nil
+	sqlStr := `DELETE FROM "mediator"`
+	_, err := d.pool.Exec(d.ctx, sqlStr)
+	if err != nil { services.Log.Debug("psql query failed: ", err) }
+	return err
+}
+
+func (d *PostgreSQL) MediatorGetAll () ([]*services.ActorKey, error) {
+	sqlStr := `
+		SELECT "mediator_id", "key_data", "key_signature", "public_key"
+			FROM "mediator"
+			WHERE active
+	`
+	res, err := d.pool.Query(d.ctx, sqlStr)
+	defer res.Close()
+	if err != nil {
+		services.Log.Debug("psql query failed: ", err)
+		return nil, err
+	}
+
+	ms := []*services.ActorKey{}
+	for res.Next() {
+		var id, data string
+		var sig, key []byte
+		res.Scan(&id, &data, &sig, &key)
+		ms = append(ms, &services.ActorKey{
+			ID:        fromBase64(id),
+			Data:      data,
+			Signature: sig,
+			PublicKey: key,
+		})
+	}
+	return ms, nil
+}
+
+func (d *PostgreSQL) MediatorUpsert (key *services.ActorKey) error {
+	sqlStr := `
+		INSERT INTO "mediator"
+			("mediator_id", "key_data", "key_signature", "public_key")
+			VALUES ($1, $2, $3, $4)
+			ON CONFLICT ("mediator_id") DO UPDATE 
+			SET "key_data" = EXCLUDED."key_data"
+				, "key_signature" = EXCLUDED."key_signature"
+				, "public_key" = EXCLUDED."public_key"
+				, "updated_at" = NOW()
+	`
+	_, err := d.pool.Exec(d.ctx, sqlStr,
+		toBase64(key.ID), // $1
+		key.Data,         // $2
+		key.Signature,    // $3
+		key.PublicKey,    // $4
+	)
+
+	if err != nil { services.Log.Debug("psql query failed: ", err) }
+	return err
 }
 
 func (d *PostgreSQL) SettingsDelete (id string) error {
@@ -116,7 +182,7 @@ func (d *PostgreSQL) SettingsReset () error {
 	return err
 }
 
-func (d *PostgreSQL) SettingsStore (id string, data []byte) error {
+func (d *PostgreSQL) SettingsUpsert (id string, data []byte) error {
 	sqlStr := `
 		INSERT INTO "storage" ("storage_id", "data") VALUES ($1, $2)
 			ON CONFLICT ("storage_id") DO UPDATE 

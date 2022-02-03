@@ -32,7 +32,7 @@ func (c *Appointments) getAppointmentsAggregated(
 ) services.Response {
 
 	// get all provider keys
-	keys, err := c.getActorKeys()
+	keys, err := c.backend.getProviderKeys()
 	if err != nil {
 		services.Log.Error(err)
 		return context.InternalError()
@@ -46,7 +46,7 @@ func (c *Appointments) getAppointmentsAggregated(
 
 	providerAppointmentsList := []*services.AggregatedProviderAppointments{}
 
-	for _, providerKey := range keys.Providers {
+	for _, providerKey := range keys {
 
 		pkd, err := providerKey.ProviderKeyData()
 		if err != nil {

@@ -201,6 +201,7 @@ type KeyLists struct {
 	Mediators []*ActorKey `json:"mediators"`
 }
 
+// TODO split into provider and mediator key, since the signed data differs
 type ActorKey struct {
 	ID        []byte        `json:"id"`
 	Data      string        `json:"data"`

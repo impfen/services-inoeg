@@ -30,7 +30,7 @@ func (c *Appointments) isActiveProvider(
 	id []byte,
 ) services.Response {
 
-	if _, err := c.backend.Keys("providers").Get(id); err != nil {
+	if _, err := c.backend.getProviderKey(id); err != nil {
 		if err == databases.NotFound {
 			return context.Error(404, "provider not found", nil)
 		}

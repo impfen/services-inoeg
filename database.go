@@ -34,18 +34,16 @@ type DatabaseMaker func(settings interface{}) (Database, error)
 
 type DatabaseOps interface {
 	AppointmentsReset() error
+	MediatorUpsert(key *ActorKey) error
 	SettingsDelete(id string) error
 	SettingsGet(id string) ([]byte, error)
 	SettingsReset() error
-	SettingsStore(id string, data []byte) error
+	SettingsUpsert(id string, data []byte) error
 }
 
 // A database can deliver and accept message
 type Database interface {
 	Close() error
 	DatabaseOps
-}
-
-type Object interface {
 }
 

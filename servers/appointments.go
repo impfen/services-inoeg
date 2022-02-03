@@ -428,26 +428,6 @@ func (c *Appointments) Key(key string) *crypto.Key {
 	return c.settings.Key(key)
 }
 
-func (c *Appointments) getActorKeys() (*services.KeyLists, error) {
-
-	mediatorKeys, err := c.backend.Keys("mediators").GetAll()
-
-	if err != nil {
-		return nil, err
-	}
-
-	providerKeys, err := c.backend.Keys("providers").GetAll()
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &services.KeyLists{
-		Providers: providerKeys,
-		Mediators: mediatorKeys,
-	}, nil
-}
-
 // authentication helpers
 
 func (c *Appointments) isUser(context services.Context, params *services.SignedParams) services.Response {
@@ -501,14 +481,19 @@ func (c *Appointments) isRoot(context services.Context, params *services.SignedP
 
 func (c *Appointments) isMediator(context services.Context, params *services.SignedParams) (services.Response, *services.ActorKey) {
 
-	keys, err := c.getActorKeys()
-
+	keys, err := c.backend.getMediatorKeys()
 	if err != nil {
 		services.Log.Error(err)
 		return context.InternalError(), nil
 	}
 
-	if resp, key := c.isValidActorSignature(context, []byte(params.JSON), params.Signature, params.PublicKey, keys.Mediators); resp != nil {
+	if resp, key := c.isValidActorSignature(
+		context,
+		[]byte(params.JSON),
+		params.Signature,
+		params.PublicKey,
+		keys,
+	); resp != nil {
 		return resp, nil
 	} else if expired(params.Timestamp) {
 		return context.Error(410, "signature expired", nil), nil
@@ -571,7 +556,7 @@ func (c *Appointments) isProvider(
 		return context.Error(410, "signature expired", nil), nil
 	}
 
-	keys, err := c.getActorKeys()
+	keys, err := c.backend.getProviderKeys()
 
 	if err != nil {
 		services.Log.Error(err)
@@ -583,7 +568,7 @@ func (c *Appointments) isProvider(
 		[]byte(params.JSON),
 		params.Signature,
 		params.PublicKey,
-		keys.Providers,
+		keys,
 	); resp != nil {
 		return resp, nil
 	} else {

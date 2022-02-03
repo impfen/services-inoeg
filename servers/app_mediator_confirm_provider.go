@@ -41,24 +41,23 @@ func (c *Appointments) confirmProvider(
 		return resp
 	}
 
-	providerId := crypto.Hash(params.Data.SignedKeyData.Data.Signing)
+	providerID := crypto.Hash(params.Data.SignedKeyData.Data.Signing)
 
-	lock, err := c.LockProvider(providerId)
+	lock, err := c.LockProvider(providerID)
 	if err != nil {
 		services.Log.Error(err)
 		return LockError(context)
 	}
 	defer lock.Release()
 
-	keys := c.backend.Keys("providers")
-
 	providerKey := &services.ActorKey{
+		ID:        providerID,
 		Data:      params.Data.SignedKeyData.JSON,
 		Signature: params.Data.SignedKeyData.Signature,
 		PublicKey: params.Data.SignedKeyData.PublicKey,
 	}
 
-	if err := keys.Set(providerId, providerKey); err != nil {
+	if err := c.backend.setProviderKey(providerKey); err != nil {
 		services.Log.Error(err)
 		return context.InternalError()
 	}
@@ -68,12 +67,12 @@ func (c *Appointments) confirmProvider(
 	confirmedProviderData := c.backend.ConfirmedProviderData()
 	publicProviderData := c.backend.PublicProviderData()
 
-	oldPd, err := unverifiedProviderData.Get(providerId)
+	oldPd, err := unverifiedProviderData.Get(providerID)
 
 	if err != nil {
 		if err == databases.NotFound {
 			// maybe this provider has already been verified before...
-			if oldPd, err = verifiedProviderData.Get(providerId); err != nil {
+			if oldPd, err = verifiedProviderData.Get(providerID); err != nil {
 				if err == databases.NotFound {
 					return context.NotFound()
 				} else {
@@ -87,21 +86,21 @@ func (c *Appointments) confirmProvider(
 		}
 	}
 
-	if err := unverifiedProviderData.Del(providerId); err != nil {
+	if err := unverifiedProviderData.Del(providerID); err != nil {
 		if err != databases.NotFound {
 			services.Log.Error(err)
 			return context.InternalError()
 		}
 	}
 
-	if err := verifiedProviderData.Set(providerId, oldPd); err != nil {
+	if err := verifiedProviderData.Set(providerID, oldPd); err != nil {
 		services.Log.Error(err)
 		return context.InternalError()
 	}
 
 	// we store a copy of the encrypted data for the provider to check
 	if err := confirmedProviderData.Set(
-		providerId,
+		providerID,
 		params.Data.ConfirmedProviderData,
 	); err != nil {
 		services.Log.Error(err)
@@ -110,7 +109,7 @@ func (c *Appointments) confirmProvider(
 
 	if params.Data.PublicProviderData != nil {
 		if err := publicProviderData.Set(
-			providerId,
+			providerID,
 			params.Data.PublicProviderData,
 		); err != nil {
 			services.Log.Error(err)

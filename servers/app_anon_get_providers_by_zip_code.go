@@ -32,7 +32,7 @@ func (c *Appointments) getProvidersByZipCode(
 ) services.Response {
 
 	// get all provider keys
-	providerKeys, err := c.backend.Keys("providers").GetAll()
+	providerKeys, err := c.backend.getProviderKeys()
 	if err != nil {
 		services.Log.Error(err)
 		return context.InternalError()

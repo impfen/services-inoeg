@@ -39,5 +39,5 @@ func (s *StorageBackend) reset () error {
 }
 
 func (s *StorageBackend) storeSettings (id, data []byte) error {
-	return s.db.SettingsStore(toBase64(id), data)
+	return s.db.SettingsUpsert(toBase64(id), data)
 }

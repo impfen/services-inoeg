@@ -33,8 +33,14 @@ func (c *Appointments) getAppointmentsByZipCode(
 ) services.Response {
 
 	// get all provider keys
-	keys, err := c.getActorKeys()
+	providerKeys, err := c.backend.getProviderKeys()
+	if err != nil {
+		services.Log.Error(err)
+		return context.InternalError()
+	}
 
+	// get all mediator keys
+	mediatorKeys, err := c.backend.getMediatorKeys()
 	if err != nil {
 		services.Log.Error(err)
 		return context.InternalError()
@@ -59,7 +65,7 @@ func (c *Appointments) getAppointmentsByZipCode(
 
 	providerAppointmentsList := []*services.ProviderAppointments{}
 
-	for _, providerKey := range keys.Providers {
+	for _, providerKey := range providerKeys {
 
 		if int64(len(providerAppointmentsList)) >= c.settings.ResponseMaxProvider {
 			break
@@ -171,7 +177,7 @@ func (c *Appointments) getAppointmentsByZipCode(
 			)
 		})
 
-		mediatorKey, err := findActorKey(keys.Mediators, providerKey.PublicKey)
+		mediatorKey, err := findActorKey(mediatorKeys, providerKey.PublicKey)
 
 		if err != nil {
 			services.Log.Error(err)

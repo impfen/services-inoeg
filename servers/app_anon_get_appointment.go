@@ -26,16 +26,19 @@ import (
 func (c *Appointments) getAppointment(context services.Context, params *services.GetAppointmentParams) services.Response {
 
 	// get all provider keys
-	keys, err := c.getActorKeys()
-
-	publicProviderData := c.backend.PublicProviderData()
-
-	providerKey, err := findActorKey(keys.Providers, params.ProviderID)
-
+	providerKeys, err := c.backend.getProviderKeys()
 	if err != nil {
 		if err == databases.NotFound {
 			return context.NotFound()
 		}
+		services.Log.Error(err)
+		return context.InternalError()
+	}
+
+	publicProviderData := c.backend.PublicProviderData()
+
+	providerKey, err := findActorKey(providerKeys, params.ProviderID)
+	if err != nil {
 		services.Log.Error(err)
 		return context.InternalError()
 	}
@@ -51,12 +54,18 @@ func (c *Appointments) getAppointment(context services.Context, params *services
 		return context.InternalError()
 	}
 
-	mediatorKey, err := findActorKey(keys.Mediators, providerKey.PublicKey)
-
+	// get all mediator keys
+	mediatorKeys, err := c.backend.getMediatorKeys()
 	if err != nil {
 		if err == databases.NotFound {
 			return context.NotFound()
 		}
+		services.Log.Error(err)
+		return context.InternalError()
+	}
+
+	mediatorKey, err := findActorKey(mediatorKeys, providerKey.PublicKey)
+	if err != nil {
 		services.Log.Error(err)
 		return context.InternalError()
 	}

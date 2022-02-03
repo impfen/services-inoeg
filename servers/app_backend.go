@@ -32,15 +32,33 @@ type AppointmentsBackend struct {
 	db services.Database
 }
 
+func (a *AppointmentsBackend) getMediatorKeys() ([]*services.ActorKey, error) {
+	return []*services.ActorKey{}, nil // TODO
+}
+
+func (a *AppointmentsBackend) setMediatorKey(key *services.ActorKey) error {
+	return a.db.MediatorUpsert(key)
+}
+
+func (a *AppointmentsBackend) getProviderKeys() ([]*services.ActorKey, error) {
+	return []*services.ActorKey{}, nil // TODO
+}
+
+func (a *AppointmentsBackend) getProviderKey(
+	providerID []byte,
+) (*services.ActorKey, error) {
+	return nil, nil // TODO
+}
+
+func (a *AppointmentsBackend) setProviderKey(key *services.ActorKey) error {
+	return nil // TODO
+}
+
 func (a *AppointmentsBackend) Neighbors(neighborType, zipCode string) *Neighbors {
 	return nil
 }
 
 func (a *AppointmentsBackend) PriorityToken(name string) *PriorityToken {
-	return nil
-}
-
-func (a *AppointmentsBackend) Keys(actor string) *Keys {
 	return nil
 }
 
@@ -108,21 +126,6 @@ func (n *Neighbors) Add(to string, distance int64) error {
 }
 
 func (n *Neighbors) Range(from, to int64) ([]Neighbors, error) {
-	return nil, nil
-}
-
-type Keys struct {
-}
-
-func (k *Keys) Set(id []byte, key *services.ActorKey) error {
-	return nil
-}
-
-func (k *Keys) Get(id []byte) (*services.ActorKey, error) {
-	return nil, nil
-}
-
-func (k *Keys) GetAll() ([]*services.ActorKey, error) {
 	return nil, nil
 }
 
