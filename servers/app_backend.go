@@ -33,7 +33,7 @@ type AppointmentsBackend struct {
 }
 
 func (a *AppointmentsBackend) getMediatorKeys() ([]*services.ActorKey, error) {
-	return a.db.MediatorGetAll()
+	return a.db.MediatorKeysGetAll()
 }
 
 func (a *AppointmentsBackend) setMediatorKey(key *services.ActorKey) error {
@@ -74,6 +74,8 @@ func (a *AppointmentsBackend) getProviderByID(
 	provider, err := a.db.ProviderGetByID(providerID)
 	if err != nil {return nil, err}
 
+	provider.VerifiedData.Verified = true
+
 	// make sure unverified data is not nil when provider is verified
 	unverifiedData := &services.RawProviderData{}
 	if provider.UnverifiedData == nil {
@@ -89,7 +91,7 @@ func (a *AppointmentsBackend) getProviderByID(
 }
 
 func (a *AppointmentsBackend) getProviderKeys() ([]*services.ActorKey, error) {
-	return []*services.ActorKey{}, nil // TODO
+	return a.db.ProviderKeysGetAll()
 }
 
 func (a *AppointmentsBackend) getProviderKey(

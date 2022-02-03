@@ -101,7 +101,7 @@ func (d *PostgreSQL) AppointmentsReset () error {
 	return err
 }
 
-func (d *PostgreSQL) MediatorGetAll () ([]*services.ActorKey, error) {
+func (d *PostgreSQL) MediatorKeysGetAll () ([]*services.ActorKey, error) {
 	sqlStr := `
 		SELECT "mediator_id", "key_data", "key_signature", "public_key"
 			FROM "mediator"
@@ -277,6 +277,33 @@ func (d *PostgreSQL) ProviderGetAll(
 	return providers, nil
 }
 
+func (d *PostgreSQL) ProviderKeysGetAll () ([]*services.ActorKey, error) {
+	sqlStr := `
+		SELECT "provider_id", "key_data", "key_signature", "public_key"
+			FROM "provider"
+			WHERE active
+	`
+	res, err := d.pool.Query(d.ctx, sqlStr)
+	defer res.Close()
+	if err != nil {
+		services.Log.Debug("psql query failed: ", err)
+		return nil, err
+	}
+
+	ms := []*services.ActorKey{}
+	for res.Next() {
+		var id, data string
+		var sig, key []byte
+		res.Scan(&id, &data, &sig, &key)
+		ms = append(ms, &services.ActorKey{
+			ID:        fromBase64(id),
+			Data:      data,
+			Signature: sig,
+			PublicKey: key,
+		})
+	}
+	return ms, nil
+}
 
 func (d *PostgreSQL) ProviderPublishData (
 	data *services.RawProviderData,
@@ -311,6 +338,7 @@ func (d *PostgreSQL) ProviderVerify (
 				, "key_data" = $10
 				, "key_signature" = $11
 				, "public_key" = $12
+				, "active" = true
 				, "updated_at" = NOW()
 			WHERE "provider_id" = $1
 	`

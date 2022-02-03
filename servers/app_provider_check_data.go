@@ -35,21 +35,24 @@ func (c *Appointments) checkProviderData(
 		PublicKey: params.PublicKey,
 		Timestamp: params.Data.Timestamp,
 	})
-
-	if resp != nil {
+	if resp != nil { 
 		return resp
 	}
 
-	providerId := crypto.Hash(params.PublicKey)
-	encryptedProviderData := c.backend.ConfirmedProviderData()
 
-	if providerData, err := encryptedProviderData.Get(providerId); err != nil {
+	providerId := crypto.Hash(params.PublicKey)
+
+	if provider, err := c.backend.getProviderByID(providerId); err != nil {
 		if err == databases.NotFound {
 			return context.NotFound()
 		}
 		services.Log.Error(err)
 		return context.InternalError()
 	} else {
-		return context.Result(providerData)
+		if provider.VerifiedData == nil {
+			return context.NotFound()
+		} else {
+			return context.Result(provider.VerifiedData)
+		}
 	}
 }

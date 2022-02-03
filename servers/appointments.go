@@ -576,7 +576,13 @@ func (c *Appointments) isProvider(
 	}
 }
 
-func (c *Appointments) isValidActorSignature(context services.Context, data, signature, publicKey []byte, keyList []*services.ActorKey) (services.Response, *services.ActorKey) {
+func (c *Appointments) isValidActorSignature(
+	context services.Context,
+	data,
+	signature,
+	publicKey []byte,
+	keyList []*services.ActorKey,
+) (services.Response, *services.ActorKey) {
 
 	actorKey, err := findActorKey(keyList, publicKey)
 
