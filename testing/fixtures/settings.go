@@ -19,8 +19,8 @@
 package fixtures
 
 import (
-	"github.com/kiebitz-oss/services"
-	"github.com/kiebitz-oss/services/helpers"
+	"github.com/impfen/services-inoeg"
+	"github.com/impfen/services-inoeg/helpers"
 )
 
 type Settings struct {

@@ -19,8 +19,8 @@
 package cmd
 
 import (
-	"github.com/kiebitz-oss/services"
-	"github.com/kiebitz-oss/services/cmd/helpers"
+	"github.com/impfen/services-inoeg"
+	"github.com/impfen/services-inoeg/cmd/helpers"
 )
 
 var Commands = services.CommandsDefinitions{

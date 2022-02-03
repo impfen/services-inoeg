@@ -19,8 +19,8 @@
 package rest
 
 import (
-	"github.com/kiebitz-oss/services"
-	"github.com/kiebitz-oss/services/http"
+	"github.com/impfen/services-inoeg"
+	"github.com/impfen/services-inoeg/http"
 	"regexp"
 )
 

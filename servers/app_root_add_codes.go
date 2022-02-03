@@ -19,8 +19,8 @@
 package servers
 
 import (
-	"github.com/kiebitz-oss/services"
-	"github.com/kiebitz-oss/services/crypto"
+	"github.com/impfen/services-inoeg"
+	"github.com/impfen/services-inoeg/crypto"
 )
 
 func (c *Appointments) addCodes(context services.Context, params *services.AddCodesParams) services.Response {

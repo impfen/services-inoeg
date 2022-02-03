@@ -20,7 +20,7 @@ package metrics
 
 import (
 	"context"
-	"github.com/kiebitz-oss/services"
+	"github.com/impfen/services-inoeg"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
 	"sync"

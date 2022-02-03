@@ -19,9 +19,9 @@
 package servers
 
 import (
-	"github.com/kiebitz-oss/services"
-	"github.com/kiebitz-oss/services/api"
-	"github.com/kiebitz-oss/services/forms"
+	"github.com/impfen/services-inoeg"
+	"github.com/impfen/services-inoeg/api"
+	"github.com/impfen/services-inoeg/forms"
 )
 
 type Storage struct {

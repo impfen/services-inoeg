@@ -24,7 +24,7 @@ import (
 	"fmt"
 	"github.com/bsm/redislock"
 	"github.com/go-redis/redis/v8"
-	"github.com/kiebitz-oss/services"
+	"github.com/impfen/services-inoeg"
 	"github.com/kiprotect/go-helpers/forms"
 	"github.com/prometheus/client_golang/prometheus"
 	"hash/fnv"

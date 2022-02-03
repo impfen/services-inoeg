@@ -20,9 +20,9 @@ package fixtures
 
 import (
 	"fmt"
-	"github.com/kiebitz-oss/services"
-	"github.com/kiebitz-oss/services/crypto"
-	"github.com/kiebitz-oss/services/helpers"
+	"github.com/impfen/services-inoeg"
+	"github.com/impfen/services-inoeg/crypto"
+	"github.com/impfen/services-inoeg/helpers"
 )
 
 type Provider struct {

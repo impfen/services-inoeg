@@ -19,8 +19,8 @@
 package meters
 
 import (
-	"github.com/kiebitz-oss/services"
-	"github.com/kiebitz-oss/services/databases"
+	"github.com/impfen/services-inoeg"
+	"github.com/impfen/services-inoeg/databases"
 )
 
 var Meters = services.MeterDefinitions{

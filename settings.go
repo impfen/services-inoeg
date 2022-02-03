@@ -19,7 +19,7 @@
 package services
 
 import (
-	"github.com/kiebitz-oss/services/crypto"
+	"github.com/impfen/services-inoeg/crypto"
 )
 
 type RPCSettings struct {

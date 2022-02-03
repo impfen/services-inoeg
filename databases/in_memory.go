@@ -20,7 +20,7 @@ package databases
 
 import (
 	"crypto/sha256"
-	"github.com/kiebitz-oss/services"
+	"github.com/impfen/services-inoeg"
 	"time"
 )
 

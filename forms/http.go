@@ -19,7 +19,7 @@
 package forms
 
 import (
-	"github.com/kiebitz-oss/services/tls"
+	"github.com/impfen/services-inoeg/tls"
 	"github.com/kiprotect/go-helpers/forms"
 )
 

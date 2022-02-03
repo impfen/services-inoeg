@@ -20,7 +20,7 @@ package forms
 
 import (
 	"fmt"
-	"github.com/kiebitz-oss/services"
+	"github.com/impfen/services-inoeg"
 )
 
 type AreValidMeterSettings struct {

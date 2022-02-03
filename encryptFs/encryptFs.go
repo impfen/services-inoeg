@@ -25,7 +25,7 @@ package encryptFs
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kiebitz-oss/services/crypto"
+	"github.com/impfen/services-inoeg/crypto"
 	"io"
 	"io/fs"
 )

@@ -22,7 +22,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"github.com/kiebitz-oss/services"
+	"github.com/impfen/services-inoeg"
 	"io/ioutil"
 )
 

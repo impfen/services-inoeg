@@ -19,7 +19,7 @@
 package helpers
 
 import (
-	"github.com/kiebitz-oss/services"
+	"github.com/impfen/services-inoeg"
 )
 
 func InitializeDatabase(settings *services.Settings) (services.Database, error) {

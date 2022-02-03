@@ -20,10 +20,10 @@ package servers
 
 import (
 	"bytes"
-	"github.com/kiebitz-oss/services"
-	"github.com/kiebitz-oss/services/api"
-	"github.com/kiebitz-oss/services/crypto"
-	"github.com/kiebitz-oss/services/forms"
+	"github.com/impfen/services-inoeg"
+	"github.com/impfen/services-inoeg/api"
+	"github.com/impfen/services-inoeg/crypto"
+	"github.com/impfen/services-inoeg/forms"
 )
 
 // time windows for statistics generation

@@ -19,9 +19,9 @@
 package api
 
 import (
-	"github.com/kiebitz-oss/services"
-	"github.com/kiebitz-oss/services/jsonrpc"
-	"github.com/kiebitz-oss/services/rest"
+	"github.com/impfen/services-inoeg"
+	"github.com/impfen/services-inoeg/jsonrpc"
+	"github.com/impfen/services-inoeg/rest"
 	"github.com/kiprotect/go-helpers/forms"
 )
 

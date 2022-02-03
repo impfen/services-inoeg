@@ -19,7 +19,7 @@
 package servers
 
 import (
-	"github.com/kiebitz-oss/services"
+	"github.com/impfen/services-inoeg"
 )
 
 // return all public keys present in the system

@@ -19,12 +19,12 @@
 package main
 
 import (
-	"github.com/kiebitz-oss/services"
-	cmdHelpers "github.com/kiebitz-oss/services/cmd/helpers"
-	"github.com/kiebitz-oss/services/crypto"
-	"github.com/kiebitz-oss/services/definitions"
-	"github.com/kiebitz-oss/services/encryptFs"
-	"github.com/kiebitz-oss/services/helpers"
+	"github.com/impfen/services-inoeg"
+	cmdHelpers "github.com/impfen/services-inoeg/cmd/helpers"
+	"github.com/impfen/services-inoeg/crypto"
+	"github.com/impfen/services-inoeg/definitions"
+	"github.com/impfen/services-inoeg/encryptFs"
+	"github.com/impfen/services-inoeg/helpers"
 )
 
 func Settings(definitions *services.Definitions) (*services.Settings, error) {

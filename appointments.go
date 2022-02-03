@@ -20,7 +20,7 @@ package services
 
 import (
 	"encoding/json"
-	"github.com/kiebitz-oss/services/crypto"
+	"github.com/impfen/services-inoeg/crypto"
 	"time"
 )
 

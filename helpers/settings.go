@@ -23,8 +23,8 @@
 package helpers
 
 import (
-	"github.com/kiebitz-oss/services"
-	servicesForms "github.com/kiebitz-oss/services/forms"
+	"github.com/impfen/services-inoeg"
+	servicesForms "github.com/impfen/services-inoeg/forms"
 	"github.com/kiprotect/go-helpers/forms"
 	"github.com/kiprotect/go-helpers/settings"
 	"io/fs"
