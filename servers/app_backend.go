@@ -33,7 +33,7 @@ type AppointmentsBackend struct {
 }
 
 func (a *AppointmentsBackend) getMediatorKeys() ([]*services.ActorKey, error) {
-	return []*services.ActorKey{}, nil // TODO
+	return a.db.MediatorGetAll()
 }
 
 func (a *AppointmentsBackend) setMediatorKey(key *services.ActorKey) error {
@@ -48,6 +48,12 @@ func (a *AppointmentsBackend) getProviderKey(
 	providerID []byte,
 ) (*services.ActorKey, error) {
 	return nil, nil // TODO
+}
+
+func (a *AppointmentsBackend) publishProvider(
+	provider *services.RawProviderData,
+) error {
+	return a.db.ProviderPublishData(provider)
 }
 
 func (a *AppointmentsBackend) setProviderKey(key *services.ActorKey) error {

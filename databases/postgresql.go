@@ -150,6 +150,19 @@ func (d *PostgreSQL) MediatorUpsert (key *services.ActorKey) error {
 	return err
 }
 
+func (d *PostgreSQL) ProviderPublishData (
+	data *services.RawProviderData,
+) error {
+	sqlStr := `
+		INSERT INTO "provider" ("provider_id", "unverified_data") VALUES ($1, $2)
+			ON CONFLICT ("provider_id") DO UPDATE 
+			SET "unverified_data" = EXCLUDED."unverified_data", "updated_at" = NOW()
+	`
+	_, err := d.pool.Exec(d.ctx, sqlStr, toBase64(data.ID), data.EncryptedData)
+	if err != nil { services.Log.Debug("psql query failed: ", err) }
+	return err
+}
+
 func (d *PostgreSQL) SettingsDelete (id string) error {
 	sqlStr := `DELETE FROM "storage" WHERE "storage_id" = $1`
 	_, err := d.pool.Exec(d.ctx, sqlStr, id)

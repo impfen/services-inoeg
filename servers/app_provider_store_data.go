@@ -21,7 +21,6 @@ package servers
 import (
 	"github.com/kiebitz-oss/services"
 	"github.com/kiebitz-oss/services/crypto"
-	"github.com/kiebitz-oss/services/databases"
 )
 
 // { id, encryptedData, code }, keyPair
@@ -49,14 +48,12 @@ func (c *Appointments) storeProviderData(
 		return context.Error(410, "signature expired", nil)
 	}
 
-	// TODO: add one-time use check
-
 	providerId := crypto.Hash(params.PublicKey)
 
-	verifiedProviderData := c.backend.VerifiedProviderData()
-	providerData := c.backend.UnverifiedProviderData()
-	codes := c.backend.Codes("provider")
+	// TODO implement code handling
+	//codes := c.backend.Codes("provider")
 
+	/*
 	existingData := false
 	if result, err := verifiedProviderData.Get(providerId); err != nil {
 		if err != databases.NotFound {
@@ -78,26 +75,20 @@ func (c *Appointments) storeProviderData(
 			return context.Error(401, "not authorized", nil)
 		}
 	}
-
-	// aquire a lock before writing new data
-	lock, err := c.LockProvider(providerId)
-	if err != nil {
-		services.Log.Error(err)
-		return LockError(context)
-	}
-	defer lock.Release()
+	*/
 
 	rawProviderData := &services.RawProviderData{
 		ID: providerId,
 		EncryptedData: params.Data.EncryptedData,
 	}
 
-	if err := providerData.Set(providerId, rawProviderData); err != nil {
+	if err := c.backend.publishProvider(rawProviderData); err != nil {
 		services.Log.Error(err)
 		return context.InternalError()
 	}
 
 	// we delete the provider code
+	/*
 	if c.settings.ProviderCodesEnabled {
 		score, err := codes.Score(params.Data.Code)
 		if err != nil && err != databases.NotFound {
@@ -117,6 +108,7 @@ func (c *Appointments) storeProviderData(
 			return context.InternalError()
 		}
 	}
+	*/
 
 	return context.Acknowledge()
 }

@@ -34,7 +34,10 @@ type DatabaseMaker func(settings interface{}) (Database, error)
 
 type DatabaseOps interface {
 	AppointmentsReset() error
+	MediatorGetAll() ([]*ActorKey, error)
 	MediatorUpsert(key *ActorKey) error
+	//ProviderGetAll() (SqlProvider, error)
+	ProviderPublishData(*RawProviderData) error
 	SettingsDelete(id string) error
 	SettingsGet(id string) ([]byte, error)
 	SettingsReset() error
@@ -45,5 +48,9 @@ type DatabaseOps interface {
 type Database interface {
 	Close() error
 	DatabaseOps
+}
+
+type SqlProvider struct {
+	ID []byte `json:"id"`
 }
 
