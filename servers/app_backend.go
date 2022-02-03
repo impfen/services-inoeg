@@ -70,11 +70,19 @@ func (a *AppointmentsBackend) getPendingProviders (
 
 func (a *AppointmentsBackend) getProviderByID(
 	providerID []byte,
+) (*services.SqlProvider, error) {
+	return a.db.ProviderGetByID(providerID)
+}
+
+func (a *AppointmentsBackend) getProviderForVerifyByID(
+	providerID []byte,
 ) (*services.GetProviderResult, error) {
 	provider, err := a.db.ProviderGetByID(providerID)
 	if err != nil {return nil, err}
 
-	provider.VerifiedData.Verified = true
+	if provider.VerifiedData != nil {
+		provider.VerifiedData.Verified = true
+	}
 
 	// make sure unverified data is not nil when provider is verified
 	unverifiedData := &services.RawProviderData{}

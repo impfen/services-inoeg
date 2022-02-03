@@ -38,7 +38,7 @@ func (c *Appointments) getProviderData(
 	if resp != nil { return resp }
 
 
-	res, err := c.backend.getProviderByID(params.Data.ProviderID)
+	res, err := c.backend.getProviderForVerifyByID(params.Data.ProviderID)
 	if err != nil {
 		if err == databases.NotFound {
 			return context.NotFound()

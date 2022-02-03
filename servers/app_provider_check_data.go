@@ -49,10 +49,10 @@ func (c *Appointments) checkProviderData(
 		services.Log.Error(err)
 		return context.InternalError()
 	} else {
-		if provider.VerifiedData == nil {
+		if provider.ConfirmedData == nil {
 			return context.NotFound()
 		} else {
-			return context.Result(provider.VerifiedData)
+			return context.Result(provider.ConfirmedData)
 		}
 	}
 }
