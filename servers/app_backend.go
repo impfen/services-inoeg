@@ -40,6 +40,54 @@ func (a *AppointmentsBackend) setMediatorKey(key *services.ActorKey) error {
 	return a.db.MediatorUpsert(key)
 }
 
+func (a *AppointmentsBackend) getVerifiedProviders (
+) ([]*services.RawProviderData, error) {
+	providers, err := a.db.ProviderGetAll("verified")
+	if err != nil { return nil, err }
+
+	verified := []*services.RawProviderData{}
+	for _, p := range providers {
+		verifiedData := p.VerifiedData
+		verifiedData.Verified = true
+		verified = append(verified, verifiedData)
+	}
+	return verified, nil
+}
+
+func (a *AppointmentsBackend) getPendingProviders (
+) ([]*services.RawProviderData, error) {
+	providers, err := a.db.ProviderGetAll("unverified")
+	if err != nil { return nil, err }
+
+	unverified := []*services.RawProviderData{}
+	for _, p := range providers {
+		unverifiedData := p.UnverifiedData
+		unverifiedData.Verified = false
+		unverified = append(unverified, unverifiedData)
+	}
+	return unverified, nil
+}
+
+func (a *AppointmentsBackend) getProviderByID(
+	providerID []byte,
+) (*services.GetProviderResult, error) {
+	provider, err := a.db.ProviderGetByID(providerID)
+	if err != nil {return nil, err}
+
+	// make sure unverified data is not nil when provider is verified
+	unverifiedData := &services.RawProviderData{}
+	if provider.UnverifiedData == nil {
+		unverifiedData = provider.VerifiedData
+	} else {
+		unverifiedData = provider.UnverifiedData
+	}
+
+	return &services.GetProviderResult{
+		UnverifiedData: unverifiedData,
+		VerifiedData:   provider.VerifiedData,
+	}, nil
+}
+
 func (a *AppointmentsBackend) getProviderKeys() ([]*services.ActorKey, error) {
 	return []*services.ActorKey{}, nil // TODO
 }
@@ -54,6 +102,14 @@ func (a *AppointmentsBackend) publishProvider(
 	provider *services.RawProviderData,
 ) error {
 	return a.db.ProviderPublishData(provider)
+}
+
+func (a *AppointmentsBackend) verifyProvider(
+	key *services.ActorKey,
+	confirmedData *services.ConfirmedProviderData,
+	publicData *services.SignedProviderData,
+) error {
+	return a.db.ProviderVerify(key, confirmedData, publicData)
 }
 
 func (a *AppointmentsBackend) setProviderKey(key *services.ActorKey) error {

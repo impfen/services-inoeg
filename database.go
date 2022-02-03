@@ -19,6 +19,7 @@
 package services
 
 import (
+	"time"
 )
 
 type DatabaseDefinition struct {
@@ -36,8 +37,10 @@ type DatabaseOps interface {
 	AppointmentsReset() error
 	MediatorGetAll() ([]*ActorKey, error)
 	MediatorUpsert(key *ActorKey) error
-	//ProviderGetAll() (SqlProvider, error)
+	ProviderGetByID([]byte) (*SqlProvider, error)
+	ProviderGetAll(string) ([]*SqlProvider, error)
 	ProviderPublishData(*RawProviderData) error
+	ProviderVerify(*ActorKey, *ConfirmedProviderData, *SignedProviderData) error
 	SettingsDelete(id string) error
 	SettingsGet(id string) ([]byte, error)
 	SettingsReset() error
@@ -51,6 +54,22 @@ type Database interface {
 }
 
 type SqlProvider struct {
-	ID []byte `json:"id"`
+	ID             []byte                 `json:"id"`
+	Name           string                 `json:"name"`
+	Street         string                 `json:"street"`
+	City           string                 `json:"city"`
+	ZipCode        string                 `json:"zip_code"`
+	Description    string                 `json:"description"`
+	Accessible     bool                   `json:"accessible"`
+	KeyData        string                 `json:"key_data"`
+	KeySignature   []byte                 `json:"key_signature"`
+	PublicKey      []byte                 `json:"public_key"`
+	Active         bool                   `json:"active"`
+	UnverifiedData *RawProviderData       `json:"unverified_data"`
+	VerifiedData   *RawProviderData       `json:"verified_data"`
+	ConfirmedData  *ConfirmedProviderData `json:"confirmed_data"`
+	PublicData     *SignedProviderData    `json:"public_data"`
+	CreatedAt      time.Time              `json:"created_at"`
+	UpdatedAt      time.Time              `json:"updated_at"`
 }
 

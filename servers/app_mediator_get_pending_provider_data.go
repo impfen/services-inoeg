@@ -19,9 +19,7 @@
 package servers
 
 import (
-	"bytes"
 	"github.com/kiebitz-oss/services"
-	"sort"
 )
 
 // mediator-only endpoint
@@ -37,31 +35,12 @@ func (c *Appointments) getPendingProviderData(
 		PublicKey: params.PublicKey,
 		Timestamp: params.Data.Timestamp,
 	})
+	if resp != nil { return resp }
 
-	if resp != nil {
-		return resp
-	}
-
-	unverifiedProviderData := c.backend.UnverifiedProviderData()
-
-	providerDataMap, err := unverifiedProviderData.GetAll()
-
-	if err != nil {
+	if providers, err := c.backend.getPendingProviders(); err != nil {
 		services.Log.Error(err)
 		return context.InternalError()
+	} else {
+		return context.Result(providers)
 	}
-
-	pdEntries := []*services.RawProviderData{}
-
-	for pId, pd := range providerDataMap {
-		pd.ID = []byte(pId)
-		pd.Verified = false
-		pdEntries = append(pdEntries, pd)
-	}
-
-	sort.Slice(pdEntries, func (a, b int) bool {
-		return bytes.Compare(pdEntries[a].ID, pdEntries[b].ID) > 0
-	})
-
-	return context.Result(pdEntries)
 }

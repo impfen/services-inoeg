@@ -37,40 +37,16 @@ func (c *Appointments) getProviderData(
 	})
 	if resp != nil { return resp }
 
-	verifiedProviderData := c.backend.VerifiedProviderData()
-	verPro, verProErr := verifiedProviderData.Get(params.Data.ProviderID)
-	if verProErr != nil && verProErr != databases.NotFound {
-		services.Log.Error(verProErr)
-		return context.InternalError()
-	}
 
-	unverifiedProviderData := c.backend.UnverifiedProviderData()
-	unPro, unProErr := unverifiedProviderData.Get(params.Data.ProviderID)
-	if unProErr != nil && unProErr != databases.NotFound {
-		services.Log.Error(unProErr)
-		return context.InternalError()
-	}
-
-	if verPro == nil && unPro == nil {
-		return context.NotFound()
-	}
-
-	if unPro != nil {
-		unPro.ID       = params.Data.ProviderID
-		unPro.Verified = false
-	}
-
-	if verPro != nil {
-		verPro.ID       = params.Data.ProviderID
-		verPro.Verified = true
-		if unPro == nil {
-			unPro = verPro
+	res, err := c.backend.getProviderByID(params.Data.ProviderID)
+	if err != nil {
+		if err == databases.NotFound {
+			return context.NotFound()
+		} else {
+			services.Log.Error(err)
+			return context.InternalError()
 		}
 	}
 
-	return context.Result( &services.GetProviderResult{
-		UnverifiedData: unPro,
-		VerifiedData:   verPro,
-	})
-
+	return context.Result(res)
 }

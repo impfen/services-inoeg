@@ -46,24 +46,24 @@ type ConfirmProviderSignedParams struct {
 // this data is accessible to the provider, nothing "secret" should be
 // stored here...
 type ConfirmProviderParams struct {
-	Timestamp             time.Time              `json:"timestamp"`
-	PublicProviderData    *SignedProviderData    `json:"publicProviderData"`
 	ConfirmedProviderData *ConfirmedProviderData `json:"confirmedProviderData"`
+	PublicProviderData    *SignedProviderData    `json:"publicProviderData"`
 	SignedKeyData         *SignedProviderKeyData `json:"signedKeyData"`
+	Timestamp             time.Time              `json:"timestamp"`
 }
 
 type ConfirmedProviderData struct {
-	JSON      string                    `json:"data" coerce:"name:json"`
 	Data      *crypto.ECDHEncryptedData `json:"-" coerce:"name:data"`
-	Signature []byte                    `json:"signature"`
+	JSON      string                    `json:"data" coerce:"name:json"`
 	PublicKey []byte                    `json:"publicKey"`
+	Signature []byte                    `json:"signature"`
 }
 
 type SignedProviderKeyData struct {
-	JSON      string           `json:"data" coerce:"name:json"`
 	Data      *ProviderKeyData `json:"-" coerce:"name:data"`
-	Signature []byte           `json:"signature"`
+	JSON      string           `json:"data" coerce:"name:json"`
 	PublicKey []byte           `json:"publicKey"`
+	Signature []byte           `json:"signature"`
 }
 
 func (k *ProviderKeyData) Sign(key *crypto.Key) (*SignedProviderKeyData, error) {
@@ -329,11 +329,11 @@ type AggregatedProviderAppointments struct {
 }
 
 type SignedProviderData struct {
-	JSON      string        `json:"data" coerce:"name:json"`
-	Data      *ProviderData `json:"-" coerce:"name:data"`
-	Signature []byte        `json:"signature"`
-	PublicKey []byte        `json:"publicKey"`
 	ID        []byte        `json:"id"`
+	Data      *ProviderData `json:"-" coerce:"name:data"`
+	JSON      string        `json:"data" coerce:"name:json"`
+	PublicKey []byte        `json:"publicKey"`
+	Signature []byte        `json:"signature"`
 }
 
 func (k *ProviderData) Sign(key *crypto.Key) (*SignedProviderData, error) {

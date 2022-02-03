@@ -21,7 +21,6 @@ package servers
 import (
 	"github.com/kiebitz-oss/services"
 	"github.com/kiebitz-oss/services/crypto"
-	"github.com/kiebitz-oss/services/databases"
 )
 
 // { id, key, providerData, keyData }, keyPair
@@ -43,13 +42,6 @@ func (c *Appointments) confirmProvider(
 
 	providerID := crypto.Hash(params.Data.SignedKeyData.Data.Signing)
 
-	lock, err := c.LockProvider(providerID)
-	if err != nil {
-		services.Log.Error(err)
-		return LockError(context)
-	}
-	defer lock.Release()
-
 	providerKey := &services.ActorKey{
 		ID:        providerID,
 		Data:      params.Data.SignedKeyData.JSON,
@@ -57,64 +49,14 @@ func (c *Appointments) confirmProvider(
 		PublicKey: params.Data.SignedKeyData.PublicKey,
 	}
 
-	if err := c.backend.setProviderKey(providerKey); err != nil {
-		services.Log.Error(err)
-		return context.InternalError()
-	}
-
-	unverifiedProviderData := c.backend.UnverifiedProviderData()
-	verifiedProviderData := c.backend.VerifiedProviderData()
-	confirmedProviderData := c.backend.ConfirmedProviderData()
-	publicProviderData := c.backend.PublicProviderData()
-
-	oldPd, err := unverifiedProviderData.Get(providerID)
-
-	if err != nil {
-		if err == databases.NotFound {
-			// maybe this provider has already been verified before...
-			if oldPd, err = verifiedProviderData.Get(providerID); err != nil {
-				if err == databases.NotFound {
-					return context.NotFound()
-				} else {
-					services.Log.Error(err)
-					return context.InternalError()
-				}
-			}
-		} else {
-			services.Log.Error(err)
-			return context.InternalError()
-		}
-	}
-
-	if err := unverifiedProviderData.Del(providerID); err != nil {
-		if err != databases.NotFound {
-			services.Log.Error(err)
-			return context.InternalError()
-		}
-	}
-
-	if err := verifiedProviderData.Set(providerID, oldPd); err != nil {
-		services.Log.Error(err)
-		return context.InternalError()
-	}
-
-	// we store a copy of the encrypted data for the provider to check
-	if err := confirmedProviderData.Set(
-		providerID,
+	err := c.backend.verifyProvider(
+		providerKey,
 		params.Data.ConfirmedProviderData,
-	); err != nil {
+		params.Data.PublicProviderData,
+	)
+	if err != nil {
 		services.Log.Error(err)
 		return context.InternalError()
-	}
-
-	if params.Data.PublicProviderData != nil {
-		if err := publicProviderData.Set(
-			providerID,
-			params.Data.PublicProviderData,
-		); err != nil {
-			services.Log.Error(err)
-			return context.InternalError()
-		}
 	}
 
 	return context.Acknowledge()
