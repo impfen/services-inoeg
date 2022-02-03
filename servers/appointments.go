@@ -513,16 +513,15 @@ func (c *Appointments) isPendingProvider(
 
 	providerID := crypto.Hash(params.PublicKey)
 
-	unverifiedProviderData := c.backend.UnverifiedProviderData()
-	pDataMap, err := unverifiedProviderData.GetAll()
+	pendingProviders, err := c.backend.getPendingProviders()
 	if err != nil {
 		services.Log.Error(err)
 		return context.InternalError()
 	}
 
 	found := false
-	for pId, _ := range pDataMap {
-		if bytes.Equal([]byte(pId), providerID) {
+	for _, provider := range pendingProviders {
+		if bytes.Equal(provider.ID, providerID) {
 			found = true
 			break
 		}

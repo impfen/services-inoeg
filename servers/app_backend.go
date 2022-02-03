@@ -48,6 +48,7 @@ func (a *AppointmentsBackend) getVerifiedProviders (
 	verified := []*services.RawProviderData{}
 	for _, p := range providers {
 		verifiedData := p.VerifiedData
+		verifiedData.ID       = p.ID
 		verifiedData.Verified = true
 		verified = append(verified, verifiedData)
 	}
@@ -62,6 +63,7 @@ func (a *AppointmentsBackend) getPendingProviders (
 	unverified := []*services.RawProviderData{}
 	for _, p := range providers {
 		unverifiedData := p.UnverifiedData
+		unverifiedData.ID       = p.ID
 		unverifiedData.Verified = false
 		unverified = append(unverified, unverifiedData)
 	}
