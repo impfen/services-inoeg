@@ -140,10 +140,6 @@ func (a *AppointmentsBackend) verifyProvider(
 	return a.db.ProviderVerify(key, confirmedData, publicData)
 }
 
-func (a *AppointmentsBackend) setProviderKey(key *services.ActorKey) error {
-	return nil // TODO
-}
-
 func (a *AppointmentsBackend) Neighbors(neighborType, zipCode string) *Neighbors {
 	return nil
 }
@@ -157,18 +153,6 @@ func (a *AppointmentsBackend) Codes(actor string) *Codes {
 }
 
 func (a *AppointmentsBackend) PublicProviderData() *PublicProviderData {
-	return nil
-}
-
-func (a *AppointmentsBackend) ConfirmedProviderData() *ConfirmedProviderData {
-	return nil
-}
-
-func (a *AppointmentsBackend) UnverifiedProviderData() *RawProviderData {
-	return nil
-}
-
-func (a *AppointmentsBackend) VerifiedProviderData() *RawProviderData {
 	return nil
 }
 
@@ -240,36 +224,6 @@ func (c *Codes) Score(code []byte) (int64, error) {
 
 func (c *Codes) AddToScore(code []byte, score int64) error {
 	return nil
-}
-
-type ConfirmedProviderData struct {
-}
-
-func (c *ConfirmedProviderData) Set(providerID []byte, encryptedData *services.ConfirmedProviderData) error {
-	return nil
-}
-
-func (c *ConfirmedProviderData) Get(providerID []byte) (*services.ConfirmedProviderData, error) {
-	return nil, nil
-}
-
-type RawProviderData struct {
-}
-
-func (c *RawProviderData) Set(providerID []byte, rawData *services.RawProviderData) error {
-	return nil
-}
-
-func (c *RawProviderData) Del(providerID []byte) error {
-	return nil
-}
-
-func (c *RawProviderData) Get(providerID []byte) (*services.RawProviderData, error) {
-	return nil, nil
-}
-
-func (c *RawProviderData) GetAll() (map[string]*services.RawProviderData, error) {
-	return nil, nil
 }
 
 type UsedTokens struct {
