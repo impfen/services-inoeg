@@ -39,6 +39,7 @@ type DatabaseOps interface {
 	MediatorUpsert(key *ActorKey) error
 	ProviderGetByID([]byte) (*SqlProvider, error)
 	ProviderGetAll(string) ([]*SqlProvider, error)
+	ProviderGetPublicByZip(string, string) ([]*SqlProvider, error)
 	ProviderKeysGetAll() ([]*ActorKey, error)
 	ProviderPublishData(*RawProviderData) error
 	ProviderVerify(*ActorKey, *ConfirmedProviderData, *SignedProviderData) error

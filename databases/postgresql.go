@@ -277,6 +277,37 @@ func (d *PostgreSQL) ProviderGetAll(
 	return providers, nil
 }
 
+func (d *PostgreSQL) ProviderGetPublicByZip(
+	zipFrom string,
+	zipTo string,
+) ([]*services.SqlProvider, error) {
+	sqlStr := `
+		SELECT ` + providerRows + `
+		FROM "provider"
+		WHERE active AND zip_code >= $1 AND zip_code <= $2
+		ORDER BY "provider_id"
+	`
+
+	res, err := d.pool.Query(d.ctx, sqlStr, zipFrom, zipTo)
+	defer res.Close()
+	if err != nil {
+		services.Log.Debug("psql query failed: ", err)
+		return nil, err
+	}
+
+	providers := []*services.SqlProvider{}
+	for res.Next() {
+		p, err := rowToSqlProvider(res)
+		providers = append(providers, p)
+		if err != nil {
+			services.Log.Debug("psql query failed: ", err)
+			return nil, err
+		}
+	}
+
+	return providers, nil
+}
+
 func (d *PostgreSQL) ProviderKeysGetAll () ([]*services.ActorKey, error) {
 	sqlStr := `
 		SELECT "provider_id", "key_data", "key_signature", "public_key"

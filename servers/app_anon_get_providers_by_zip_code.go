@@ -19,11 +19,7 @@
 package servers
 
 import (
-	"bytes"
 	"github.com/kiebitz-oss/services"
-	"github.com/kiebitz-oss/services/crypto"
-	"github.com/kiebitz-oss/services/databases"
-	"sort"
 )
 
 func (c *Appointments) getProvidersByZipCode(
@@ -31,55 +27,23 @@ func (c *Appointments) getProvidersByZipCode(
 	params *services.GetProvidersByZipCodeParams,
 ) services.Response {
 
-	// get all provider keys
-	providerKeys, err := c.backend.getProviderKeys()
+	providers := []*services.SignedProviderData{}
+	publicProviders, err := c.backend.getPublicProvidersByZip(
+		params.ZipFrom,
+		params.ZipTo,
+	)
 	if err != nil {
 		services.Log.Error(err)
 		return context.InternalError()
 	}
 
-	// public provider data structure
-	publicProviderData := c.backend.PublicProviderData()
-
-	providers := []*services.SignedProviderData{}
-
-	for _, providerKey := range providerKeys {
-
+	for _, provider := range publicProviders {
 		if int64(len(providers)) >= c.settings.ResponseMaxProvider {
 			break
 		}
-
-		pkd, err := providerKey.ProviderKeyData()
-		if pkd.QueueData.ZipCode < params.ZipFrom ||
-			 pkd.QueueData.ZipCode > params.ZipTo {
-			continue
-		}
-
-		// the provider "ID" is the hash of the signing key
-		providerID := crypto.Hash(pkd.Signing)
-
-		// fetch the full public data of the provider
-		providerData, err := publicProviderData.Get(providerID)
-
-		if err != nil {
-			if err != databases.NotFound {
-				services.Log.Error(err)
-			}
-			services.Log.Warning("provider data not found")
-			continue
-		}
-
-		// we add the hash for convenience
-		providerData.ID = providerID
-
-		providers = append(providers, providerData)
+		providers = append(providers, provider)
 	}
 
-	sort.Slice(providers, func (a, b int) bool {
-		return bytes.Compare(providers[a].ID, providers[b].ID) > 0
-	})
-
 	return context.Result(providers)
-
 }
 

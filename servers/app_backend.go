@@ -70,6 +70,22 @@ func (a *AppointmentsBackend) getPendingProviders (
 	return unverified, nil
 }
 
+func (a *AppointmentsBackend) getPublicProvidersByZip (
+	zipFrom string,
+	zipTo string,
+) ([]*services.SignedProviderData, error) {
+	providers, err := a.db.ProviderGetPublicByZip(zipFrom, zipTo)
+	if err != nil { return nil, err }
+
+	public := []*services.SignedProviderData{}
+	for _, p := range providers {
+		publicData := p.PublicData
+		publicData.ID = p.ID
+		public = append(public, publicData)
+	}
+	return public, nil
+}
+
 func (a *AppointmentsBackend) getProviderByID(
 	providerID []byte,
 ) (*services.SqlProvider, error) {
