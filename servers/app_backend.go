@@ -32,6 +32,13 @@ type AppointmentsBackend struct {
 	db services.Database
 }
 
+func (a *AppointmentsBackend) upsertAppointment(
+	providerID []byte,
+	appointment *services.SignedAppointment,
+) error {
+	return a.db.AppointmentUpsert(providerID, appointment)
+}
+
 func (a *AppointmentsBackend) getMediatorKeys() ([]*services.ActorKey, error) {
 	return a.db.MediatorKeysGetAll()
 }

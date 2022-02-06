@@ -31,7 +31,7 @@ func (c *Appointments) publishAppointments(
 	params *services.PublishAppointmentsSignedParams,
 ) services.Response {
 
-	resp, providerKey := c.isProvider(context, &services.SignedParams{
+	resp, _ := c.isProvider(context, &services.SignedParams{
 		JSON:      params.JSON,
 		Signature: params.Signature,
 		PublicKey: params.PublicKey,
@@ -42,9 +42,7 @@ func (c *Appointments) publishAppointments(
 		return resp
 	}
 
-	if expired(params.Data.Timestamp) {
-		return context.Error(410, "signature expired", nil)
-	}
+	providerID := crypto.Hash(params.PublicKey)
 
 	if len(params.Data.Appointments) > 500 {
 		return context.Error(
@@ -54,20 +52,15 @@ func (c *Appointments) publishAppointments(
 		)
 	}
 
-	pkd, err := providerKey.ProviderKeyData()
-
-	if err != nil {
-		services.Log.Error(err)
-		return context.InternalError()
-	}
-
-	providerId := crypto.Hash(pkd.Signing)
 	// TODO: fix statistics generation
 	//var bookedSlots, openSlots int64
 
 	for _, appointment := range params.Data.Appointments {
-		res := updateOrCreateAppointment(c, context, providerId, appointment)
-		if res != nil { return res }
+		err := c.backend.upsertAppointment(providerID, appointment)
+		if err != nil {
+			services.Log.Error(err)
+			return context.InternalError()
+		}
 	}
 
 	// TODO: fix statistics generation
@@ -75,7 +68,7 @@ func (c *Appointments) publishAppointments(
 	if c.meter != nil {
 
 		now := time.Now().UTC().UnixNano()
-		hexUID := hex.EncodeToString(providerId)
+		hexUID := hex.EncodeToString(providerID)
 
 		addTokenStats := func(tw services.TimeWindow, data map[string]string) error {
 			// we add the maximum of the open appointments
@@ -121,12 +114,12 @@ func (c *Appointments) publishAppointments(
 func updateOrCreateAppointment (
 	c *Appointments,
 	context services.Context,
-	providerId []byte,
+	providerID []byte,
 	appointment *services.SignedAppointment,
 ) services.Response {
 
 	// appointments are stored in a provider-specific key
-	appointmentDatesByID := c.backend.AppointmentDatesByID(providerId)
+	appointmentDatesByID := c.backend.AppointmentDatesByID(providerID)
 	usedTokens := c.backend.UsedTokens()
 
 	lock, err := c.LockAppointment(appointment.Data.ID)
@@ -146,7 +139,7 @@ func updateOrCreateAppointment (
 		}
 
 		appointmentsByDate :=
-			c.backend.AppointmentsByDate(providerId, string(date))
+			c.backend.AppointmentsByDate(providerID, string(date))
 
 		if existingAppointment, err := appointmentsByDate.Get(
 			c.settings.Validate,
@@ -159,7 +152,7 @@ func updateOrCreateAppointment (
 			// delete old properties indexes
 			for k, v := range appointment.Data.Properties {
 				appointmentDatesByProperty :=
-					c.backend.AppointmentDatesByProperty(providerId, k, v)
+					c.backend.AppointmentDatesByProperty(providerID, k, v)
 				if err := appointmentDatesByProperty.Del(appointment.Data.ID); err != nil {
 					services.Log.Error(err)
 					return context.InternalError()
@@ -214,7 +207,7 @@ func updateOrCreateAppointment (
 	date := appointment.Data.Timestamp.UTC().Format("2006-01-02")
 
 	// create appointment
-	appointmentsByDate := c.backend.AppointmentsByDate(providerId, date)
+	appointmentsByDate := c.backend.AppointmentsByDate(providerID, date)
 	if err := appointmentsByDate.Set(appointment); err != nil {
 		services.Log.Error(err)
 		return context.InternalError()
@@ -228,7 +221,7 @@ func updateOrCreateAppointment (
 
 	// create ByProperty indexes
 	for k, v := range appointment.Data.Properties {
-		appointmentDatesByProperty := c.backend.AppointmentDatesByProperty(providerId, k, v)
+		appointmentDatesByProperty := c.backend.AppointmentDatesByProperty(providerID, k, v)
 		if err := appointmentDatesByProperty.Set(appointment.Data.ID, date); err != nil {
 			services.Log.Error(err)
 			return context.InternalError()

@@ -35,6 +35,7 @@ type DatabaseMaker func(settings interface{}) (Database, error)
 
 type DatabaseOps interface {
 	AppointmentsReset() error
+	AppointmentUpsert([]byte, *SignedAppointment) error 
 	MediatorKeysGetAll() ([]*ActorKey, error)
 	MediatorUpsert(key *ActorKey) error
 	ProviderGetByID([]byte) (*SqlProvider, error)

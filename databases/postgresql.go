@@ -95,10 +95,124 @@ func (d *PostgreSQL) Close() error {
 }
 
 func (d *PostgreSQL) AppointmentsReset () error {
-	sqlStr := `DELETE FROM "mediator"; DELETE FROM "provider"`
+	sqlStr := `
+		DELETE FROM "mediator";
+		DELETE FROM "provider";
+	`
 	_, err := d.pool.Exec(d.ctx, sqlStr)
 	if err != nil { services.Log.Debug("psql query failed: ", err) }
 	return err
+}
+
+func (d *PostgreSQL) AppointmentUpsert (
+	providerID []byte,
+	appointment *services.SignedAppointment,
+) error {
+	insertAppSqlStr := `
+		INSERT INTO "appointment"
+			( "appointment_id"
+			, "provider"
+			, "duration"
+			, "timestamp"
+			, "vaccine"
+			, "signed_data"
+			, "signature"
+			, "public_key"
+			)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		ON CONFLICT ("appointment_id") DO UPDATE 
+			SET "timestamp" = EXCLUDED."timestamp"
+				, "duration" = EXCLUDED."duration"
+				, "vaccine" = EXCLUDED."vaccine"
+				, "signed_data" = EXCLUDED."signed_data"
+				, "signature" = EXCLUDED."signature"
+				, "public_key" = EXCLUDED."public_key"
+				, "updated_at" = NOW()
+	`
+	insertSlotSqlStr := `
+		INSERT INTO "slot" ("slot_id" ,"appointment")
+		VALUES ($1, $2)
+		ON CONFLICT ("slot_id") DO NOTHING
+	`
+	
+	deleteSlotSqlStr := `
+		DELETE FROM "slot"
+		WHERE "appointment" = $1 AND "slot_id" <> ALL ($2)
+	`
+
+	insertPropertySqlStr := `
+		INSERT INTO "property" ("key", "value" ,"appointment")
+		VALUES ($1, $2, $3)
+		ON CONFLICT ("slot_id") DO NOTHING
+	`
+	
+	deletePropertySqlStr := `DELETE FROM "property" WHERE "appointment" = $1`
+
+	var err error
+
+	slotIDs := []string{}
+	for _, slot := range appointment.Data.SlotData {
+		slotIDs = append(slotIDs, toBase64(slot.ID))
+	}
+
+	// delete old data
+	_, err = d.pool.Exec(d.ctx, deleteSlotSqlStr,
+		toBase64(appointment.Data.ID), // $1
+		slotIDs,                       // $2
+	)
+	if err != nil {
+		services.Log.Debug("psql query failed: ", err)
+		return err
+	}
+
+	_, err = d.pool.Exec(d.ctx, deletePropertySqlStr,
+		toBase64(appointment.Data.ID), // $1
+	)
+	if err != nil {
+		services.Log.Debug("psql query failed: ", err)
+		return err
+	}
+
+	// insert new data
+	_, err = d.pool.Exec(d.ctx, insertAppSqlStr,
+		toBase64(appointment.Data.ID), // $1
+		toBase64(providerID),          // $2
+		appointment.Data.Duration,     // $3
+		appointment.Data.Timestamp,    // $4
+		appointment.Data.Vaccine,      // $5
+		appointment.JSON,              // $6
+		appointment.Signature,         // $7
+		appointment.PublicKey,         // $8
+	)
+	if err != nil {
+		services.Log.Debug("psql query failed: ", err)
+		return err
+	}
+
+	for _, slot := range appointment.Data.SlotData {
+		_, err := d.pool.Exec(d.ctx, insertSlotSqlStr,
+			toBase64(slot.ID),             // $1
+			toBase64(appointment.Data.ID), // $2
+		)
+		if err != nil {
+			services.Log.Debug("psql query failed: ", err)
+			return err
+		}
+	}
+
+	for key, val := range appointment.Data.Properties {
+		_, err := d.pool.Exec(d.ctx, insertPropertySqlStr,
+			toBase64(appointment.Data.ID), // $1
+			key,                           // $2
+			val,                           // $2
+		)
+		if err != nil {
+			services.Log.Debug("psql query failed: ", err)
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (d *PostgreSQL) MediatorKeysGetAll () ([]*services.ActorKey, error) {
