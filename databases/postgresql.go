@@ -96,17 +96,80 @@ func (d *PostgreSQL) Close() error {
 
 func (d *PostgreSQL) AppointmentsReset () error {
 	sqlStr := `
-		DELETE FROM "mediator";
+		DELETE FROM "slot";
+		DELETE FROM "property";
+		DELETE FROM "appointment";
 		DELETE FROM "provider";
+		DELETE FROM "mediator";
 	`
 	_, err := d.pool.Exec(d.ctx, sqlStr)
 	if err != nil { services.Log.Debug("psql query failed: ", err) }
 	return err
 }
 
+func (d *PostgreSQL) AppointmentsGetByDateRange (
+	providerID []byte,
+	dateFrom time.Time,
+	dateTo time.Time,
+) ([]*services.SignedAppointment, error) {
+	var getAppSqlStr = `
+		SELECT
+			  "appointment_id"
+			, "signed_data"
+			, "signature"
+			, "public_key"
+			, "updated_at"
+		FROM "appointment"
+		WHERE "provider" = $1
+			AND "timestamp" BETWEEN $2 AND $3
+		ORDER BY "appointment"."timestamp"
+	`
+
+	var getSlotSqlStr = `
+		SELECT "slot_id", "token", "public_key", "encrypted_data"
+		FROM "slot"
+		WHERE "appointment" = $1 AND "slot"."token" IS NOT NULL
+	`
+
+	appointments := []*services.SignedAppointment{}
+
+	res, err := d.pool.Query(d.ctx, getAppSqlStr, toBase64(providerID), dateFrom, dateTo)
+	defer res.Close()
+	if err != nil {
+		services.Log.Debug("psql query failed: ", err)
+		return nil, err
+	}
+
+	for res.Next() {
+		var appId string
+		app := &services.SignedAppointment{}
+		app.Bookings = []*services.Booking{}
+		res.Scan(&appId, &app.JSON, &app.Signature, &app.PublicKey, &app.UpdatedAt)
+
+		resSlots, err := d.pool.Query(d.ctx, getSlotSqlStr, appId)
+		if err != nil {
+			services.Log.Debug("psql query failed: ", err)
+			return nil, err
+		}
+
+		for resSlots.Next() {
+			var slotID string
+			slot := &services.Booking{}
+			res.Scan(&slotID, &slot.PublicKey, &slot.Token, &slot.EncryptedData)
+			slot.ID = fromBase64(slotID)
+			app.Bookings = append(app.Bookings, slot)
+		}
+
+		appointments = append(appointments, app)
+	}
+
+	return appointments, nil
+
+}
+
 func (d *PostgreSQL) AppointmentUpsert (
 	providerID []byte,
-	appointment *services.SignedAppointment,
+	appointments []*services.SignedAppointment,
 ) error {
 	insertAppSqlStr := `
 		INSERT INTO "appointment"
@@ -143,72 +206,80 @@ func (d *PostgreSQL) AppointmentUpsert (
 	insertPropertySqlStr := `
 		INSERT INTO "property" ("key", "value" ,"appointment")
 		VALUES ($1, $2, $3)
-		ON CONFLICT ("slot_id") DO NOTHING
 	`
 	
 	deletePropertySqlStr := `DELETE FROM "property" WHERE "appointment" = $1`
 
 	var err error
 
-	slotIDs := []string{}
-	for _, slot := range appointment.Data.SlotData {
-		slotIDs = append(slotIDs, toBase64(slot.ID))
-	}
-
-	// delete old data
-	_, err = d.pool.Exec(d.ctx, deleteSlotSqlStr,
-		toBase64(appointment.Data.ID), // $1
-		slotIDs,                       // $2
-	)
+	tx, err := d.pool.Begin(d.ctx)
 	if err != nil {
-		services.Log.Debug("psql query failed: ", err)
+		services.Log.Debug("can't begin transaction: ", err)
 		return err
 	}
+	defer tx.Commit(d.ctx)
 
-	_, err = d.pool.Exec(d.ctx, deletePropertySqlStr,
-		toBase64(appointment.Data.ID), // $1
-	)
-	if err != nil {
-		services.Log.Debug("psql query failed: ", err)
-		return err
-	}
+	for _, appointment := range appointments {
+		slotIDs := []string{}
+		for _, slot := range appointment.Data.SlotData {
+			slotIDs = append(slotIDs, toBase64(slot.ID))
+		}
 
-	// insert new data
-	_, err = d.pool.Exec(d.ctx, insertAppSqlStr,
-		toBase64(appointment.Data.ID), // $1
-		toBase64(providerID),          // $2
-		appointment.Data.Duration,     // $3
-		appointment.Data.Timestamp,    // $4
-		appointment.Data.Vaccine,      // $5
-		appointment.JSON,              // $6
-		appointment.Signature,         // $7
-		appointment.PublicKey,         // $8
-	)
-	if err != nil {
-		services.Log.Debug("psql query failed: ", err)
-		return err
-	}
-
-	for _, slot := range appointment.Data.SlotData {
-		_, err := d.pool.Exec(d.ctx, insertSlotSqlStr,
-			toBase64(slot.ID),             // $1
-			toBase64(appointment.Data.ID), // $2
+		// delete old data
+		_, err = tx.Exec(d.ctx, deleteSlotSqlStr,
+			toBase64(appointment.Data.ID), // $1
+			slotIDs,                       // $2
 		)
 		if err != nil {
 			services.Log.Debug("psql query failed: ", err)
 			return err
 		}
-	}
 
-	for key, val := range appointment.Data.Properties {
-		_, err := d.pool.Exec(d.ctx, insertPropertySqlStr,
+		_, err = tx.Exec(d.ctx, deletePropertySqlStr,
 			toBase64(appointment.Data.ID), // $1
-			key,                           // $2
-			val,                           // $2
 		)
 		if err != nil {
 			services.Log.Debug("psql query failed: ", err)
 			return err
+		}
+
+		// insert new data
+		_, err = tx.Exec(d.ctx, insertAppSqlStr,
+			toBase64(appointment.Data.ID), // $1
+			toBase64(providerID),          // $2
+			appointment.Data.Duration,     // $3
+			appointment.Data.Timestamp,    // $4
+			appointment.Data.Vaccine,      // $5
+			appointment.JSON,              // $6
+			appointment.Signature,         // $7
+			appointment.PublicKey,         // $8
+		)
+		if err != nil {
+			services.Log.Debug("psql query failed: ", err)
+			return err
+		}
+
+		for _, slot := range appointment.Data.SlotData {
+			_, err := tx.Exec(d.ctx, insertSlotSqlStr,
+				toBase64(slot.ID),             // $1
+				toBase64(appointment.Data.ID), // $2
+			)
+			if err != nil {
+				services.Log.Debug("psql query failed: ", err)
+				return err
+			}
+		}
+
+		for key, val := range appointment.Data.Properties {
+			_, err := tx.Exec(d.ctx, insertPropertySqlStr,
+				key,                           // $1
+				val,                           // $2
+				toBase64(appointment.Data.ID), // $3
+			)
+			if err != nil {
+				services.Log.Debug("psql query failed: ", err)
+				return err
+			}
 		}
 	}
 

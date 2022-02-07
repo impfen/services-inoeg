@@ -55,6 +55,12 @@ func (c *Appointments) publishAppointments(
 	// TODO: fix statistics generation
 	//var bookedSlots, openSlots int64
 
+	err := c.backend.upsertAppointment(providerID, params.Data.Appointments)
+	if err != nil {
+		services.Log.Error(err)
+		return context.InternalError()
+	}
+	/*
 	for _, appointment := range params.Data.Appointments {
 		err := c.backend.upsertAppointment(providerID, appointment)
 		if err != nil {
@@ -62,6 +68,7 @@ func (c *Appointments) publishAppointments(
 			return context.InternalError()
 		}
 	}
+	*/
 
 	// TODO: fix statistics generation
 	/*

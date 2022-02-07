@@ -22,7 +22,7 @@ import (
 	//"encoding/json"
 	"github.com/kiebitz-oss/services"
 	//"github.com/kiebitz-oss/services/forms"
-	//"time"
+	"time"
 )
 
 // The appointments backend acts as an interface between the API and the
@@ -34,9 +34,17 @@ type AppointmentsBackend struct {
 
 func (a *AppointmentsBackend) upsertAppointment(
 	providerID []byte,
-	appointment *services.SignedAppointment,
+	appointment []*services.SignedAppointment,
 ) error {
 	return a.db.AppointmentUpsert(providerID, appointment)
+}
+
+func (a *AppointmentsBackend) getAppointmentsByDate(
+	providerID []byte,
+	dateFrom time.Time,
+	dateTo time.Time,
+) ([]*services.SignedAppointment, error) {
+	return a.db.AppointmentsGetByDateRange(providerID, dateFrom, dateTo)
 }
 
 func (a *AppointmentsBackend) getMediatorKeys() ([]*services.ActorKey, error) {
@@ -75,6 +83,18 @@ func (a *AppointmentsBackend) getPendingProviders (
 		unverified = append(unverified, unverifiedData)
 	}
 	return unverified, nil
+}
+
+func (a *AppointmentsBackend) getPublicProviderByID (
+	providerID []byte,
+) (*services.SignedProviderData, error) {
+	provider, err := a.db.ProviderGetByID(providerID)
+	if err != nil { return nil, err }
+
+	publicData := provider.PublicData
+	publicData.ID = provider.ID
+
+	return publicData, nil
 }
 
 func (a *AppointmentsBackend) getPublicProvidersByZip (

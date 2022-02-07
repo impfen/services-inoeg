@@ -44,5 +44,3 @@ func (c *Appointments) isValidMediator(
 
 	return context.Result(true)
 }
-
-

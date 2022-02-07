@@ -21,7 +21,6 @@ package servers
 import (
 	"github.com/kiebitz-oss/services"
 	"github.com/kiebitz-oss/services/crypto"
-	"sort"
 )
 
 func (c *Appointments) getProviderAppointments(
@@ -29,25 +28,27 @@ func (c *Appointments) getProviderAppointments(
 	params *services.GetProviderAppointmentsSignedParams,
 ) services.Response {
 
-	resp, providerKey := c.isProvider(context, &services.SignedParams{
+	resp, _ := c.isProvider(context, &services.SignedParams{
 		JSON:      params.JSON,
 		Signature: params.Signature,
 		PublicKey: params.PublicKey,
 		Timestamp: params.Data.Timestamp,
 	})
+	if resp != nil { return resp }
 
-	if resp != nil {
-		return resp
-	}
+	providerID := crypto.Hash(params.PublicKey)
 
-	pkd, err := providerKey.ProviderKeyData()
-
+	signedAppointments, err := c.backend.getAppointmentsByDate(
+		providerID,
+		params.Data.From,
+		params.Data.To,
+	)
 	if err != nil {
 		services.Log.Error(err)
 		return context.InternalError()
 	}
 
-	providerId := crypto.Hash(pkd.Signing)
+	/*
 
 	// appointments are stored in a provider-specific key
 	appointmentDatesByID := c.backend.AppointmentDatesByID(providerId)
@@ -102,14 +103,14 @@ func (c *Appointments) getProviderAppointments(
 		)
 	})
 
+	*/
+
 	// public provider data structure
-	publicProviderData := c.backend.PublicProviderData()
-	providerData, err := publicProviderData.Get(providerId)
+	providerData, err := c.backend.getPublicProviderByID(providerID)
 	if err != nil {
 		services.Log.Error(err)
 		return context.InternalError()
 	}
-	providerData.ID = providerId
 
 	providerAppointments := &services.ProviderAppointments{
 		Provider:     providerData,

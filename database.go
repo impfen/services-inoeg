@@ -35,7 +35,8 @@ type DatabaseMaker func(settings interface{}) (Database, error)
 
 type DatabaseOps interface {
 	AppointmentsReset() error
-	AppointmentUpsert([]byte, *SignedAppointment) error 
+	AppointmentUpsert([]byte, []*SignedAppointment) error
+	AppointmentsGetByDateRange([]byte, time.Time, time.Time) ([]*SignedAppointment, error)
 	MediatorKeysGetAll() ([]*ActorKey, error)
 	MediatorUpsert(key *ActorKey) error
 	ProviderGetByID([]byte) (*SqlProvider, error)
@@ -75,4 +76,3 @@ type SqlProvider struct {
 	CreatedAt      time.Time              `json:"created_at"`
 	UpdatedAt      time.Time              `json:"updated_at"`
 }
-
