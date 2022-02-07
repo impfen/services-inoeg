@@ -15,7 +15,7 @@ CREATE TABLE "appointment" (
 CREATE TABLE "slot" (
   "slot_id" TEXT PRIMARY KEY,
   "appointment" TEXT NOT NULL REFERENCES "appointment",
-  "token" BYTEA,
+  "token" TEXT,
   "public_key" BYTEA,
   "encrypted_data" JSONB,
   "created_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -28,10 +28,15 @@ CREATE TABLE "property" (
   "appointment" TEXT REFERENCES "appointment",
   PRIMARY KEY ("key", "appointment")
 );
+CREATE INDEX ON "property" ("key", "value");
 
 CREATE TABLE "user_token" (
   "user_id" TEXT PRIMARY KEY,
   "n" INT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE "used_token" (
+  "token_id" TEXT PRIMARY KEY
 );
 
 CREATE TABLE "token" (

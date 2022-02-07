@@ -19,6 +19,7 @@
 package services
 
 import (
+	"github.com/kiebitz-oss/services/crypto"
 	"time"
 )
 
@@ -35,7 +36,9 @@ type DatabaseMaker func(settings interface{}) (Database, error)
 
 type DatabaseOps interface {
 	AppointmentsReset() error
+	AppointmentBook([]byte, []byte, []byte, []byte, *crypto.ECDHEncryptedData) ([]byte, error)
 	AppointmentUpsert([]byte, []*SignedAppointment) error
+	AppointmentsGetByProperty([]byte, string, string) ([]*SignedAppointment, error)
 	AppointmentsGetByDateRange([]byte, time.Time, time.Time) ([]*SignedAppointment, error)
 	MediatorKeysGetAll() ([]*ActorKey, error)
 	MediatorUpsert(key *ActorKey) error
@@ -53,12 +56,12 @@ type DatabaseOps interface {
 	TokenUserAdd([]byte, int64) (int64, error)
 }
 
-// A database can deliver and accept message
 type Database interface {
 	Close() error
 	DatabaseOps
 }
 
+// database specific structs
 type SqlProvider struct {
 	ID             []byte                 `json:"id"`
 	Name           string                 `json:"name"`
@@ -78,3 +81,6 @@ type SqlProvider struct {
 	CreatedAt      time.Time              `json:"created_at"`
 	UpdatedAt      time.Time              `json:"updated_at"`
 }
+
+// error messages
+

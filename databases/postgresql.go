@@ -25,6 +25,7 @@ import (
 	pg "github.com/jackc/pgx/v4/pgxpool"
 	"github.com/jackc/pgx/v4"
 	"github.com/kiebitz-oss/services"
+	"github.com/kiebitz-oss/services/crypto"
 	"github.com/kiprotect/go-helpers/forms"
 	"math"
 	"time"
@@ -108,6 +109,139 @@ func (d *PostgreSQL) AppointmentsReset () error {
 	return err
 }
 
+func (d *PostgreSQL) AppointmentBook (
+	providerID []byte,
+	appointmentID []byte,
+	publicKey []byte,
+	token []byte,
+	encryptedData *crypto.ECDHEncryptedData,
+) ([]byte, error) {
+
+	insertTokenSqlStr := `INSERT INTO "used_token" ("token_id") VALUES ($1)`
+	getSlotSqlStr := `
+		SELECT "slot_id"
+		FROM "slot"
+		WHERE "appointment" = $1 AND "token" IS NULL
+		FOR UPDATE
+	`
+	updateSlotSqlStr := `
+		UPDATE "slot"
+		SET "token" = $1, "public_key" = $2, "encrypted_data" = $3
+		WHERE "slot_id" = $4
+	`
+
+	tx, err := d.pool.Begin(d.ctx)
+	if err != nil {
+		services.Log.Debug("can't begin transaction: ", err)
+		return nil, err
+	}
+	defer tx.Rollback(d.ctx)
+
+	_, err = tx.Exec(d.ctx, insertTokenSqlStr, toBase64(token))
+	if err != nil {
+		services.Log.Debug("psql query failed: ", err)
+		return nil, ErrTokenUsed
+	}
+
+	var openSlot string
+	err = tx.QueryRow(
+		d.ctx,
+		getSlotSqlStr,
+		toBase64(appointmentID),
+	).Scan(&openSlot)
+	if err != nil {
+		services.Log.Debug("psql query failed: ", err)
+		return nil, NotFound
+	}
+
+	_, err = tx.Exec(
+		d.ctx,
+		updateSlotSqlStr,
+		toBase64(token),
+		publicKey,
+		encryptedData,
+		openSlot,
+	)
+	if err != nil {
+		services.Log.Debug("psql query failed: ", err)
+		return nil, err
+	}
+
+	tx.Commit(d.ctx)
+	return fromBase64(openSlot), err
+}
+
+func (d *PostgreSQL) rowToSignedAppointment (
+	row pgx.Rows,
+) (*services.SignedAppointment, error){
+	var getSlotSqlStr = `
+		SELECT "slot_id", "token", "public_key", "encrypted_data"
+		FROM "slot"
+		WHERE "appointment" = $1 AND "slot"."token" IS NOT NULL
+	`
+	
+	var appId string
+	app := &services.SignedAppointment{}
+	app.Bookings = []*services.Booking{}
+
+	row.Scan(&appId, &app.JSON, &app.Signature, &app.PublicKey, &app.UpdatedAt)
+
+	rowsSlots, err := d.pool.Query(d.ctx, getSlotSqlStr, appId)
+	defer rowsSlots.Close()
+	if err != nil {
+		services.Log.Debug("psql query failed: ", err)
+		return nil, err
+	}
+
+	for rowsSlots.Next() {
+		var slotID string
+		slot := &services.Booking{}
+		rowsSlots.Scan(&slotID, &slot.PublicKey, &slot.Token, &slot.EncryptedData)
+		slot.ID = fromBase64(slotID)
+		app.Bookings = append(app.Bookings, slot)
+	}
+
+	return app, nil
+}
+
+func (d *PostgreSQL) AppointmentsGetByProperty (
+	providerID []byte,
+	key string,
+	val string,
+) ([]*services.SignedAppointment, error) {
+	var getAppSqlStr = `
+		SELECT
+			  "appointment"."appointment_id"
+			, "appointment"."signed_data"
+			, "appointment"."signature"
+			, "appointment"."public_key"
+			, "appointment"."updated_at"
+		FROM "appointment", "property"
+		WHERE "appointment"."provider" = $1
+			AND "appointment"."appointment_id" = "property"."appointment"
+			AND "property"."key" = $2
+			AND "property"."value" = $3
+		ORDER BY "appointment"."timestamp"
+	`
+
+	appointments := []*services.SignedAppointment{}
+
+	rows, err := d.pool.Query(d.ctx, getAppSqlStr, toBase64(providerID), key, val)
+	defer rows.Close()
+	if err != nil {
+		services.Log.Debug("psql query failed: ", err)
+		return nil, err
+	}
+
+	for rows.Next() {
+		app, err := d.rowToSignedAppointment(rows)
+		if err != nil { return nil, err }
+		appointments = append(appointments, app)
+	}
+
+	return appointments, nil
+}
+
 func (d *PostgreSQL) AppointmentsGetByDateRange (
 	providerID []byte,
 	dateFrom time.Time,
@@ -126,41 +260,18 @@ func (d *PostgreSQL) AppointmentsGetByDateRange (
 		ORDER BY "appointment"."timestamp"
 	`
 
-	var getSlotSqlStr = `
-		SELECT "slot_id", "token", "public_key", "encrypted_data"
-		FROM "slot"
-		WHERE "appointment" = $1 AND "slot"."token" IS NOT NULL
-	`
-
 	appointments := []*services.SignedAppointment{}
 
-	res, err := d.pool.Query(d.ctx, getAppSqlStr, toBase64(providerID), dateFrom, dateTo)
-	defer res.Close()
+	rows, err := d.pool.Query(d.ctx, getAppSqlStr, toBase64(providerID), dateFrom, dateTo)
+	defer rows.Close()
 	if err != nil {
 		services.Log.Debug("psql query failed: ", err)
 		return nil, err
 	}
 
-	for res.Next() {
-		var appId string
-		app := &services.SignedAppointment{}
-		app.Bookings = []*services.Booking{}
-		res.Scan(&appId, &app.JSON, &app.Signature, &app.PublicKey, &app.UpdatedAt)
-
-		resSlots, err := d.pool.Query(d.ctx, getSlotSqlStr, appId)
-		if err != nil {
-			services.Log.Debug("psql query failed: ", err)
-			return nil, err
-		}
-
-		for resSlots.Next() {
-			var slotID string
-			slot := &services.Booking{}
-			res.Scan(&slotID, &slot.PublicKey, &slot.Token, &slot.EncryptedData)
-			slot.ID = fromBase64(slotID)
-			app.Bookings = append(app.Bookings, slot)
-		}
-
+	for rows.Next() {
+		app, err := d.rowToSignedAppointment(rows)
+		if err != nil { return nil, err }
 		appointments = append(appointments, app)
 	}
 
@@ -218,7 +329,7 @@ func (d *PostgreSQL) AppointmentUpsert (
 		services.Log.Debug("can't begin transaction: ", err)
 		return err
 	}
-	defer tx.Commit(d.ctx)
+	defer tx.Rollback(d.ctx)
 
 	for _, appointment := range appointments {
 		slotIDs := []string{}
@@ -278,12 +389,13 @@ func (d *PostgreSQL) AppointmentUpsert (
 				toBase64(appointment.Data.ID), // $3
 			)
 			if err != nil {
-				services.Log.Debug("psql query failed: ", err)
+				services.Log.Debugf("psql query failed: %#v", err)
 				return err
 			}
 		}
 	}
 
+	tx.Commit(d.ctx)
 	return nil
 }
 
@@ -655,7 +767,7 @@ func (d *PostgreSQL) TokenUserAdd (userID []byte, n int64) (int64, error) {
 	).Scan(&newN); err != nil {
 
 		services.Log.Debug("psql query failed: ", err)
-		return 0, err
+		return math.MaxInt64, err
 	}
 
 	return newN, nil

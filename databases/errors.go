@@ -23,3 +23,4 @@ import (
 )
 
 var NotFound = fmt.Errorf("not found")
+var ErrTokenUsed = fmt.Errorf("token used")

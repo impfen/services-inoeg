@@ -19,10 +19,8 @@
 package servers
 
 import (
-	"bytes"
 	"github.com/kiebitz-oss/services"
 	"github.com/kiebitz-oss/services/databases"
-	"time"
 )
 
 func (c *Appointments) isActiveProvider(
@@ -54,137 +52,32 @@ func (c *Appointments) bookAppointment(
 		return resp
 	}
 
-	var result interface{}
-
-	usedTokens := c.backend.UsedTokens()
 	token := params.Data.SignedTokenData.Data.Token
 
-	// test if provider of the appointment is still active
-	if res := c.isActiveProvider(context, params.Data.ProviderID); res != nil {
-		return res
-	}
-
-	appointmentDatesByID := c.backend.AppointmentDatesByID(
+	slotID, err := c.backend.bookAppointment(
 		params.Data.ProviderID,
+		params.Data.ID, // appointment id
+		params.PublicKey,
+		token,
+		params.Data.EncryptedData,
 	)
-
-	if date, err := appointmentDatesByID.Get(params.Data.ID); err != nil {
-		services.Log.Errorf("Cannot get appointment by ID: %v", err)
-		return context.InternalError()
-	} else {
-
-		appointmentsByDate := c.backend.AppointmentsByDate(
-			params.Data.ProviderID,
-			date,
-		)
-
-		// lock the appointment before attempting to retreive it
-		appLock, err := c.LockAppointment(params.Data.ID)
-		if err != nil {
+	if err != nil {
+		if err == databases.ErrTokenUsed {
+			return context.Error(401, "not authorized", nil)
+		} else if err == databases.NotFound {
+			return context.Error(404, "not found", nil)
+		} else {
 			services.Log.Error(err)
 			return LockError(context)
 		}
-		defer appLock.Release()
-
-		if signedAppointment, err := appointmentsByDate.Get(
-			c.settings.Validate,
-			params.Data.ID,
-		); err != nil {
-
-			services.Log.Errorf("Cannot get appointment by date: %v", err)
-			return context.InternalError()
-
-		} else {
-			// we try to find an open slot
-			foundSlot := false
-			for _, slotData := range signedAppointment.Data.SlotData {
-
-				found := false
-
-				for _, booking := range signedAppointment.Bookings {
-					if bytes.Equal(booking.ID, slotData.ID) {
-						found = true
-						break
-					}
-				}
-
-				if found {
-					continue
-				}
-
-				if ok, err := usedTokens.Has(token); err != nil {
-					services.Log.Error(err)
-					return context.InternalError()
-				} else if ok {
-					return context.Error(401, "not authorized", nil)
-				}
-
-				tokenLock, err := c.LockToken(token)
-				if err != nil {
-					services.Log.Error(err)
-					return LockError(context)
-				}
-				defer tokenLock.Release()
-
-				// this slot is open, we book it!
-
-				booking := &services.Booking{
-					PublicKey:     params.PublicKey,
-					ID:            slotData.ID,
-					Token:         token,
-					EncryptedData: params.Data.EncryptedData,
-				}
-
-				signedAppointment.Bookings = append(signedAppointment.Bookings, booking)
-				foundSlot = true
-
-				result = booking
-
-				break
-			}
-
-			if !foundSlot {
-				return context.NotFound()
-			}
-
-			// we mark the token as used
-			if err := usedTokens.Add(token); err != nil {
-				services.Log.Error(err)
-				return context.InternalError()
-			}
-
-			signedAppointment.UpdatedAt = time.Now()
-
-			if err := appointmentsByDate.Set(signedAppointment); err != nil {
-				services.Log.Error(err)
-				return context.InternalError()
-			}
-
-		}
-
 	}
 
-	// TODO fix statistics
-	/*
-	if c.meter != nil {
-
-		now := time.Now().UTC().UnixNano()
-
-		for _, twt := range tws {
-
-			// generate the time window
-			tw := twt(now)
-
-			// we add the info that a booking was made
-			if err := c.meter.Add("queues", "bookings", map[string]string{}, tw, 1); err != nil {
-				services.Log.Error(err)
-			}
-
-		}
-
+	booking := &services.Booking{
+		PublicKey:     params.PublicKey,
+		ID:            slotID,
+		Token:         token,
+		EncryptedData: params.Data.EncryptedData,
 	}
-	*/
 
-	return context.Result(result)
-
+	return context.Result(booking)
 }

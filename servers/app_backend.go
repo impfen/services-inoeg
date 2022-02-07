@@ -21,7 +21,7 @@ package servers
 import (
 	//"encoding/json"
 	"github.com/kiebitz-oss/services"
-	//"github.com/kiebitz-oss/services/forms"
+	"github.com/kiebitz-oss/services/crypto"
 	"time"
 )
 
@@ -30,6 +30,22 @@ import (
 // and deserialized when stored or fetched from the database.
 type AppointmentsBackend struct {
 	db services.Database
+}
+
+func (a *AppointmentsBackend) bookAppointment(
+	providerID []byte,
+	appointmentID []byte,
+	publicKey []byte,
+	token []byte,
+	encryptedData *crypto.ECDHEncryptedData,
+) ([]byte, error) {
+	return a.db.AppointmentBook(
+		providerID,
+		appointmentID,
+		publicKey,
+		token,
+		encryptedData,
+	)
 }
 
 func (a *AppointmentsBackend) upsertAppointment(
@@ -45,6 +61,14 @@ func (a *AppointmentsBackend) getAppointmentsByDate(
 	dateTo time.Time,
 ) ([]*services.SignedAppointment, error) {
 	return a.db.AppointmentsGetByDateRange(providerID, dateFrom, dateTo)
+}
+
+func (a *AppointmentsBackend) getAppointmentsByProperty(
+	providerID []byte,
+	key string,
+	val string,
+) ([]*services.SignedAppointment, error) {
+	return a.db.AppointmentsGetByProperty(providerID, key, val)
 }
 
 func (a *AppointmentsBackend) getMediatorKeys() ([]*services.ActorKey, error) {
