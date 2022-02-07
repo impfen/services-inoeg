@@ -49,6 +49,8 @@ type DatabaseOps interface {
 	SettingsGet(id string) ([]byte, error)
 	SettingsReset() error
 	SettingsUpsert(id string, data []byte) error
+	TokenPrimaryAdd(int64) (int64, error)
+	TokenUserAdd([]byte, int64) (int64, error)
 }
 
 // A database can deliver and accept message

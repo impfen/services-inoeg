@@ -167,11 +167,19 @@ func (a *AppointmentsBackend) verifyProvider(
 	return a.db.ProviderVerify(key, confirmedData, publicData)
 }
 
-func (a *AppointmentsBackend) Neighbors(neighborType, zipCode string) *Neighbors {
-	return nil
+func (a *AppointmentsBackend) primaryTokenAdd (n int64) (int64, error) {
+	return a.db.TokenPrimaryAdd(n)
 }
 
-func (a *AppointmentsBackend) PriorityToken(name string) *PriorityToken {
+func (a *AppointmentsBackend) userTokenAdd (
+	userID []byte,
+	n int64,
+) (int64, error) {
+	return a.db.TokenUserAdd(userID, n)
+}
+
+// legacy
+func (a *AppointmentsBackend) Neighbors(neighborType, zipCode string) *Neighbors {
 	return nil
 }
 
@@ -204,17 +212,6 @@ func (a *AppointmentsBackend) AppointmentDatesByProperty(
 
 func (a *AppointmentsBackend) UsedTokens() *UsedTokens {
 	return nil
-}
-
-type PriorityToken struct {
-}
-
-func (p *PriorityToken) IncrBy(value int64) (int64, error) {
-	return 0, nil
-}
-
-func (p *PriorityToken) DecrBy(value int64) (int64, error) {
-	return 0, nil
 }
 
 type Neighbors struct {

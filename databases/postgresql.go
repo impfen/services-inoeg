@@ -26,6 +26,7 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/kiebitz-oss/services"
 	"github.com/kiprotect/go-helpers/forms"
+	"math"
 	"time"
 )
 
@@ -620,3 +621,42 @@ func (d *PostgreSQL) SettingsUpsert (id string, data []byte) error {
 	return err
 }
 
+func (d *PostgreSQL) TokenPrimaryAdd (n int64) (int64, error) {
+	sqlStr := `
+		UPDATE "token" SET "n" = "n" + $1 WHERE "name" = 'primary'
+		RETURNING "n"
+	`
+
+	var newN int64
+
+	if err := d.pool.QueryRow(d.ctx, sqlStr, n).Scan(&newN); err != nil {
+		services.Log.Debug("psql query failed: ", err)
+		return math.MaxInt64, err
+	}
+
+	return newN, nil
+}
+
+func (d *PostgreSQL) TokenUserAdd (userID []byte, n int64) (int64, error) {
+	sqlStr := `
+		INSERT INTO "user_token" ("user_id", "n") VALUES ($1, $2)
+			ON CONFLICT ("user_id") DO UPDATE
+			SET "n" = "user_token"."n" + EXCLUDED."n"
+			RETURNING "n"
+	`
+
+	var newN int64
+
+	if err := d.pool.QueryRow(
+		d.ctx,
+		sqlStr,
+		toBase64(userID),
+		n,
+	).Scan(&newN); err != nil {
+
+		services.Log.Debug("psql query failed: ", err)
+		return 0, err
+	}
+
+	return newN, nil
+}

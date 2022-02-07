@@ -21,6 +21,7 @@ package servers
 import (
 	"github.com/kiebitz-oss/services"
 	"github.com/kiebitz-oss/services/crypto"
+	"time"
 )
 
 func (c *Appointments) getProviderAppointments(
@@ -38,72 +39,32 @@ func (c *Appointments) getProviderAppointments(
 
 	providerID := crypto.Hash(params.PublicKey)
 
+	// emulate legacy behavior
+	from := params.Data.From.Truncate(time.Hour*24)
+	to := params.Data.To.Truncate(time.Hour*24).Add(time.Hour*24)
+
 	signedAppointments, err := c.backend.getAppointmentsByDate(
 		providerID,
-		params.Data.From,
-		params.Data.To,
+		from,
+		to,
 	)
 	if err != nil {
 		services.Log.Error(err)
 		return context.InternalError()
 	}
 
-	/*
-
-	// appointments are stored in a provider-specific key
-	appointmentDatesByID := c.backend.AppointmentDatesByID(providerId)
-	allDates, err := appointmentDatesByID.GetAll()
-	if err != nil {
-		services.Log.Error(err)
-		return context.InternalError()
+	// if the updatedSince parameter is given we only return appointments that
+	// have been updated since the given time
+	if params.Data.UpdatedSince != nil {
+		filteredAppointments := []*services.SignedAppointment{}
+		for _, app := range signedAppointments {
+			if app.UpdatedAt.After(*params.Data.UpdatedSince) ||
+			   app.UpdatedAt.Equal(*params.Data.UpdatedSince) {
+				filteredAppointments = append(filteredAppointments, app)
+			}
+		}
+		signedAppointments = filteredAppointments
 	}
-
-	signedAppointments := make([]*services.SignedAppointment, 0)
-	visitedDates := make(map[string]bool)
-
-	dateFrom := params.Data.From.Format("2006-01-02")
-	dateTo := params.Data.To.Format("2006-01-02")
-
-	for _, date := range allDates {
-
-		dateStr := string(date)
-
-		if _, ok := visitedDates[dateStr]; ok {
-			continue
-		} else {
-			visitedDates[dateStr] = true
-		}
-
-		if dateStr < dateFrom || dateStr > dateTo {continue}
-
-		appointmentsByDate := c.backend.AppointmentsByDate(providerId, dateStr)
-
-		allAppointments, err := appointmentsByDate.GetAll(c.settings.Validate)
-
-		if err != nil {
-			services.Log.Error(err)
-			return context.InternalError()
-		}
-
-		for _, appointment := range allAppointments {
-			// if the updatedSince parameter is given we only return appointments that
-			// have been updated since the given time
-			isUpdated := params.Data.UpdatedSince != nil && (
-				params.Data.UpdatedSince.After(appointment.UpdatedAt) ||
-				params.Data.UpdatedSince.Equal(appointment.UpdatedAt) )
-			if isUpdated {continue}
-
-			signedAppointments = append(signedAppointments, appointment)
-		}
-	}
-
-	sort.Slice(signedAppointments, func (a, b int) bool {
-		return signedAppointments[a].Data.Timestamp.Before(
-			signedAppointments[b].Data.Timestamp,
-		)
-	})
-
-	*/
 
 	// public provider data structure
 	providerData, err := c.backend.getPublicProviderByID(providerID)

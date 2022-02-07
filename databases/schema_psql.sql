@@ -29,6 +29,17 @@ CREATE TABLE "property" (
   PRIMARY KEY ("key", "appointment")
 );
 
+CREATE TABLE "user_token" (
+  "user_id" TEXT PRIMARY KEY,
+  "n" INT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE "token" (
+  "name" TEXT PRIMARY KEY,
+  "n" INT NOT NULL DEFAULT 0
+);
+INSERT INTO "token" ("name") VALUES ('primary') ON CONFLICT DO NOTHING;
+
 CREATE TABLE "mediator" (
   "mediator_id" TEXT PRIMARY KEY,
   "key_data" TEXT NOT NULL,

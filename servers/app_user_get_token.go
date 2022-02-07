@@ -21,12 +21,10 @@ package servers
 import (
 	"crypto/hmac"
 	"crypto/sha256"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/kiebitz-oss/services"
 	"github.com/kiebitz-oss/services/crypto"
-	"github.com/kiebitz-oss/services/databases"
 )
 
 /* Generates an HMAC based priority token and associated data structure. As the
@@ -45,18 +43,16 @@ func (c *Appointments) priorityToken(
 ) (*services.PriorityToken, string, []byte, error) {
 
 	// check that we are alowed to get another token
-	tokenNum := c.backend.PriorityToken(base64.StdEncoding.EncodeToString(userID))
-	if n, err := tokenNum.IncrBy(1); err != nil {
+	if n, err := c.backend.userTokenAdd(userID, 1); err != nil {
 		return nil, "", nil, err
 	} else {
 		if n > c.settings.MaxTokensPerUser {
-			tokenNum.DecrBy(1)
+			c.backend.userTokenAdd(userID, -1)
 			return nil, "", nil, maxTokensError
 		}
 	}
 
-	token := c.backend.PriorityToken("primary")
-	if n, err := token.IncrBy(1); err != nil {
+	if n, err := c.backend.primaryTokenAdd(1); err != nil {
 		return nil, "", nil, err
 	} else {
 
@@ -82,8 +78,6 @@ func (c *Appointments) getToken(
 	params *services.GetTokenParams,
 ) services.Response {
 
-	codes := c.backend.Codes("user")
-
 	tokenKey := c.settings.Key("token")
 	if tokenKey == nil {
 		services.Log.Error("token key missing")
@@ -91,6 +85,10 @@ func (c *Appointments) getToken(
 	}
 
 	var signedData *crypto.SignedStringData
+
+	/*
+	// TODO implement user codes
+	codes := c.backend.Codes("user")
 
 	if c.settings.UserCodesEnabled {
 		notAuthorized := context.Error(401, "not authorized", nil)
@@ -104,6 +102,7 @@ func (c *Appointments) getToken(
 			return notAuthorized
 		}
 	}
+	*/
 
 	userID := params.PublicKey
 
@@ -136,6 +135,8 @@ func (c *Appointments) getToken(
 		}
 	}
 
+	/*
+	// TODO implement user codes
 	// if this is a new token we delete the user code
 	if c.settings.UserCodesEnabled {
 		score, err := codes.Score(params.Code)
@@ -156,6 +157,7 @@ func (c *Appointments) getToken(
 			return context.InternalError()
 		}
 	}
+	*/
 
 	return context.Result(signedData)
 
