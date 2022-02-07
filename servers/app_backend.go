@@ -55,6 +55,13 @@ func (a *AppointmentsBackend) upsertAppointment(
 	return a.db.AppointmentUpsert(providerID, appointment)
 }
 
+func (a *AppointmentsBackend) getAppointment(
+	appointmentID [] byte,
+	providerID []byte,
+) (*services.SignedAppointment, error) {
+	return a.db.AppointmentGet(appointmentID, providerID)
+}
+
 func (a *AppointmentsBackend) getAppointmentsByDate(
 	providerID []byte,
 	dateFrom time.Time,
@@ -69,6 +76,12 @@ func (a *AppointmentsBackend) getAppointmentsByProperty(
 	val string,
 ) ([]*services.SignedAppointment, error) {
 	return a.db.AppointmentsGetByProperty(providerID, key, val)
+}
+
+func (a *AppointmentsBackend) findMediatorKey(
+	id []byte,
+) (*services.ActorKey, error) {
+	return a.db.MediatorKeyFind(id)
 }
 
 func (a *AppointmentsBackend) getMediatorKeys() ([]*services.ActorKey, error) {
@@ -171,10 +184,10 @@ func (a *AppointmentsBackend) getProviderKeys() ([]*services.ActorKey, error) {
 	return a.db.ProviderKeysGetAll()
 }
 
-func (a *AppointmentsBackend) getProviderKey(
+func (a *AppointmentsBackend) getProviderKeyByID(
 	providerID []byte,
 ) (*services.ActorKey, error) {
-	return nil, nil // TODO
+	return a.db.ProviderKeyGetByID(providerID)
 }
 
 func (a *AppointmentsBackend) publishProvider(

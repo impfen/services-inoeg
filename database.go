@@ -38,13 +38,16 @@ type DatabaseOps interface {
 	AppointmentsReset() error
 	AppointmentBook([]byte, []byte, []byte, []byte, *crypto.ECDHEncryptedData) ([]byte, error)
 	AppointmentUpsert([]byte, []*SignedAppointment) error
+	AppointmentGet([]byte, []byte) (*SignedAppointment, error)
 	AppointmentsGetByProperty([]byte, string, string) ([]*SignedAppointment, error)
 	AppointmentsGetByDateRange([]byte, time.Time, time.Time) ([]*SignedAppointment, error)
+	MediatorKeyFind([]byte) (*ActorKey, error)
 	MediatorKeysGetAll() ([]*ActorKey, error)
 	MediatorUpsert(key *ActorKey) error
 	ProviderGetByID([]byte) (*SqlProvider, error)
 	ProviderGetAll(string) ([]*SqlProvider, error)
 	ProviderGetPublicByZip(string, string) ([]*SqlProvider, error)
+	ProviderKeyGetByID([]byte) (*ActorKey, error)
 	ProviderKeysGetAll() ([]*ActorKey, error)
 	ProviderPublishData(*RawProviderData) error
 	ProviderVerify(*ActorKey, *ConfirmedProviderData, *SignedProviderData) error

@@ -172,7 +172,7 @@ func (d *PostgreSQL) AppointmentBook (
 }
 
 func (d *PostgreSQL) rowToSignedAppointment (
-	row pgx.Rows,
+	row pgx.Row,
 ) (*services.SignedAppointment, error){
 	var getSlotSqlStr = `
 		SELECT "slot_id", "token", "public_key", "encrypted_data"
@@ -204,6 +204,40 @@ func (d *PostgreSQL) rowToSignedAppointment (
 	return app, nil
 }
 
+func (d *PostgreSQL) AppointmentGet (
+	appointmentID []byte,
+	providerID []byte,
+) (*services.SignedAppointment, error) {
+	var getAppSqlStr = `
+		SELECT
+			  "appointment_id"
+			, "signed_data"
+			, "signature"
+			, "public_key"
+			, "updated_at"
+		FROM "appointment"
+		WHERE "appointment_id" = $1 AND "provider" = $2
+	`
+
+	row := d.pool.QueryRow(
+		d.ctx,
+		getAppSqlStr,
+		toBase64(appointmentID),
+		toBase64(providerID),
+	)
+
+	app, err := d.rowToSignedAppointment(row)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, NotFound
+		} else {
+			services.Log.Debug("psql query failed: ", err)
+			return nil, err
+		}
+	}
+
+	return app, nil
+}
 func (d *PostgreSQL) AppointmentsGetByProperty (
 	providerID []byte,
 	key string,
@@ -397,6 +431,41 @@ func (d *PostgreSQL) AppointmentUpsert (
 
 	tx.Commit(d.ctx)
 	return nil
+}
+
+func (d *PostgreSQL) MediatorKeyFind (id []byte) (*services.ActorKey, error) {
+	sqlStr := `
+		SELECT "mediator_id", "key_data", "key_signature", "public_key"
+			FROM "mediator"
+			WHERE active
+				AND (
+					"mediator_id" = $1
+					OR "key_data"::jsonb->'signing' = to_jsonb($1)
+				)
+	`
+
+	mediatorKey := &services.ActorKey{}
+	var mediatorID string
+
+	row := d.pool.QueryRow(d.ctx, sqlStr, toBase64(id))
+	err := row.Scan(
+		&mediatorID,
+		&mediatorKey.Data,
+		&mediatorKey.Signature,
+		&mediatorKey.PublicKey,
+	)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, NotFound
+		} else {
+			services.Log.Debugf("psql query failed:\n%#v\n", err)
+			return nil, err
+		}
+	}
+
+	mediatorKey.ID = fromBase64(mediatorID)
+
+	return mediatorKey, nil
 }
 
 func (d *PostgreSQL) MediatorKeysGetAll () ([]*services.ActorKey, error) {
@@ -604,6 +673,39 @@ func (d *PostgreSQL) ProviderGetPublicByZip(
 	}
 
 	return providers, nil
+}
+
+func (d *PostgreSQL) ProviderKeyGetByID (
+	providerID []byte,
+) (*services.ActorKey, error) {
+	sqlStr := `
+		SELECT "provider_id", "key_data", "key_signature", "public_key"
+			FROM "provider"
+			WHERE "provider_id" = $1
+	`
+
+	providerKey := &services.ActorKey{}
+	var id string
+
+	row := d.pool.QueryRow(d.ctx, sqlStr, toBase64(providerID))
+	err := row.Scan(
+		&id,
+		&providerKey.Data,
+		&providerKey.Signature,
+		&providerKey.PublicKey,
+	)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, NotFound
+		} else {
+			services.Log.Debug("psql query failed: ", err)
+			return nil, err
+		}
+	}
+
+	providerKey.ID = fromBase64(id)
+
+	return providerKey, nil
 }
 
 func (d *PostgreSQL) ProviderKeysGetAll () ([]*services.ActorKey, error) {

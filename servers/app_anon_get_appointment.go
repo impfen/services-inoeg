@@ -23,10 +23,15 @@ import (
 	"github.com/kiebitz-oss/services/databases"
 )
 
-func (c *Appointments) getAppointment(context services.Context, params *services.GetAppointmentParams) services.Response {
+func (c *Appointments) getAppointment(
+	context services.Context,
+	params *services.GetAppointmentParams,
+) services.Response {
 
-	// get all provider keys
-	providerKeys, err := c.backend.getProviderKeys()
+	signedAppointment, err := c.backend.getAppointment(
+		params.ID,
+		params.ProviderID,
+	)
 	if err != nil {
 		if err == databases.NotFound {
 			return context.NotFound()
@@ -35,17 +40,13 @@ func (c *Appointments) getAppointment(context services.Context, params *services
 		return context.InternalError()
 	}
 
-	publicProviderData := c.backend.PublicProviderData()
-
-	providerKey, err := findActorKey(providerKeys, params.ProviderID)
+	providerKey, err := c.backend.getProviderKeyByID(params.ProviderID)
 	if err != nil {
 		services.Log.Error(err)
 		return context.InternalError()
 	}
 
-	// fetch the full public data of the provider
-	providerData, err := publicProviderData.Get(params.ProviderID)
-
+	providerData, err := c.backend.getProviderByID(params.ProviderID)
 	if err != nil {
 		if err == databases.NotFound {
 			return context.NotFound()
@@ -54,17 +55,7 @@ func (c *Appointments) getAppointment(context services.Context, params *services
 		return context.InternalError()
 	}
 
-	// get all mediator keys
-	mediatorKeys, err := c.backend.getMediatorKeys()
-	if err != nil {
-		if err == databases.NotFound {
-			return context.NotFound()
-		}
-		services.Log.Error(err)
-		return context.InternalError()
-	}
-
-	mediatorKey, err := findActorKey(mediatorKeys, providerKey.PublicKey)
+	mediatorKey, err := c.backend.findMediatorKey(providerKey.PublicKey)
 	if err != nil {
 		services.Log.Error(err)
 		return context.InternalError()
@@ -75,43 +66,10 @@ func (c *Appointments) getAppointment(context services.Context, params *services
 		Mediator: mediatorKey,
 	}
 
-	providerData.ID = params.ProviderID
-
-	appointmentDatesByID := c.backend.AppointmentDatesByID(params.ProviderID)
-
-	if date, err := appointmentDatesByID.Get(params.ID); err != nil {
-		services.Log.Errorf("Cannot get appointment by ID: %v", err)
-		return context.InternalError()
-	} else {
-
-		appointmentsByDate := c.backend.AppointmentsByDate(params.ProviderID, date)
-
-		if signedAppointment, err := appointmentsByDate.Get(c.settings.Validate, params.ID); err != nil {
-			if err == databases.NotFound {
-				return context.NotFound()
-			}
-			services.Log.Errorf("Cannot get appointment by date: %v", err)
-			return context.InternalError()
-		} else {
-
-			slots := make([]*services.Slot, len(signedAppointment.Bookings))
-
-			for i, booking := range signedAppointment.Bookings {
-				slots[i] = &services.Slot{ID: booking.ID}
-			}
-
-			// we remove the bookings as the user is not allowed to see them
-			signedAppointment.Bookings = nil
-			signedAppointment.BookedSlots = slots
-
-			return context.Result(&services.ProviderAppointments{
-				Provider:     providerData,
-				Appointments: []*services.SignedAppointment{signedAppointment},
-				KeyChain:     keyChain,
-			})
-
-		}
-
-	}
+	return context.Result(&services.ProviderAppointments{
+		Provider:     providerData.PublicData,
+		Appointments: []*services.SignedAppointment{signedAppointment},
+		KeyChain:     keyChain,
+	})
 
 }
