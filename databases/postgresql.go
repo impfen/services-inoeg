@@ -53,7 +53,7 @@ type PostgreSQLSettings struct {
 }
 
 var PostgreSQLForm = forms.Form{
-	ErrorMsg: "invalid data encountered in the Redis config form",
+	ErrorMsg: "invalid data encountered in the PostgrePostgres config form",
 	Fields: []forms.Field{
 		{
 			Name: "connection_string",
@@ -105,7 +105,7 @@ func (d *PostgreSQL) AppointmentsReset () error {
 		DELETE FROM "mediator";
 	`
 	_, err := d.pool.Exec(d.ctx, sqlStr)
-	if err != nil { services.Log.Debug("psql query failed: ", err) }
+	if err != nil { services.Log.Debugf("psql query failed:\n%#v\n", err) }
 	return err
 }
 
@@ -132,14 +132,14 @@ func (d *PostgreSQL) AppointmentBook (
 
 	tx, err := d.pool.Begin(d.ctx)
 	if err != nil {
-		services.Log.Debug("can't begin transaction: ", err)
+		services.Log.Debugf("can't begin transaction: ", err)
 		return nil, err
 	}
 	defer tx.Rollback(d.ctx)
 
 	_, err = tx.Exec(d.ctx, insertTokenSqlStr, toBase64(token))
 	if err != nil {
-		services.Log.Debug("psql query failed: ", err)
+		services.Log.Debugf("psql query failed:\n%#v\n", err)
 		return nil, ErrTokenUsed
 	}
 
@@ -150,7 +150,7 @@ func (d *PostgreSQL) AppointmentBook (
 		toBase64(appointmentID),
 	).Scan(&openSlot)
 	if err != nil {
-		services.Log.Debug("psql query failed: ", err)
+		services.Log.Debugf("psql query failed:\n%#v\n", err)
 		return nil, NotFound
 	}
 
@@ -163,12 +163,41 @@ func (d *PostgreSQL) AppointmentBook (
 		openSlot,
 	)
 	if err != nil {
-		services.Log.Debug("psql query failed: ", err)
+		services.Log.Debugf("psql query failed:\n%#v\n", err)
 		return nil, err
 	}
 
 	tx.Commit(d.ctx)
 	return fromBase64(openSlot), err
+}
+
+func (d *PostgreSQL) AppointmentCancel (
+	appointmentID []byte,
+	token []byte,
+) error {
+	var delBookingSqlStr = `
+		UPDATE "slot"
+		SET "token" = NULL, "public_key" = NULL, "encrypted_data" = NULL
+		WHERE "appointment" = $1 AND "token" = $2
+	`
+	var delTokenSqlStr = `DELETE FROM "used_token" WHERE "token_id" = $1`
+
+	_, err := d.pool.Exec(d.ctx, delBookingSqlStr,
+		toBase64(appointmentID),
+		toBase64(token),
+	)
+	if err != nil {
+		services.Log.Debugf("psql query failed:\n%#v\n", err)
+		return err
+	}
+
+	_, err = d.pool.Exec(d.ctx, delTokenSqlStr, toBase64(token))
+	if err != nil {
+		services.Log.Debugf("psql query failed:\n%#v\n", err)
+		return err
+	}
+
+	return nil
 }
 
 func (d *PostgreSQL) rowToSignedAppointment (
@@ -189,7 +218,7 @@ func (d *PostgreSQL) rowToSignedAppointment (
 	rowsSlots, err := d.pool.Query(d.ctx, getSlotSqlStr, appId)
 	defer rowsSlots.Close()
 	if err != nil {
-		services.Log.Debug("psql query failed: ", err)
+		services.Log.Debugf("psql query failed:\n%#v\n", err)
 		return nil, err
 	}
 
@@ -231,7 +260,7 @@ func (d *PostgreSQL) AppointmentGet (
 		if err == pgx.ErrNoRows {
 			return nil, NotFound
 		} else {
-			services.Log.Debug("psql query failed: ", err)
+			services.Log.Debugf("psql query failed:\n%#v\n", err)
 			return nil, err
 		}
 	}
@@ -263,7 +292,7 @@ func (d *PostgreSQL) AppointmentsGetByProperty (
 	rows, err := d.pool.Query(d.ctx, getAppSqlStr, toBase64(providerID), key, val)
 	defer rows.Close()
 	if err != nil {
-		services.Log.Debug("psql query failed: ", err)
+		services.Log.Debugf("psql query failed:\n%#v\n", err)
 		return nil, err
 	}
 
@@ -299,7 +328,7 @@ func (d *PostgreSQL) AppointmentsGetByDateRange (
 	rows, err := d.pool.Query(d.ctx, getAppSqlStr, toBase64(providerID), dateFrom, dateTo)
 	defer rows.Close()
 	if err != nil {
-		services.Log.Debug("psql query failed: ", err)
+		services.Log.Debugf("psql query failed:\n%#v\n", err)
 		return nil, err
 	}
 
@@ -360,7 +389,7 @@ func (d *PostgreSQL) AppointmentUpsert (
 
 	tx, err := d.pool.Begin(d.ctx)
 	if err != nil {
-		services.Log.Debug("can't begin transaction: ", err)
+		services.Log.Debugf("can't begin transaction: ", err)
 		return err
 	}
 	defer tx.Rollback(d.ctx)
@@ -377,7 +406,7 @@ func (d *PostgreSQL) AppointmentUpsert (
 			slotIDs,                       // $2
 		)
 		if err != nil {
-			services.Log.Debug("psql query failed: ", err)
+			services.Log.Debugf("psql query failed:\n%#v\n", err)
 			return err
 		}
 
@@ -385,7 +414,7 @@ func (d *PostgreSQL) AppointmentUpsert (
 			toBase64(appointment.Data.ID), // $1
 		)
 		if err != nil {
-			services.Log.Debug("psql query failed: ", err)
+			services.Log.Debugf("psql query failed:\n%#v\n", err)
 			return err
 		}
 
@@ -401,7 +430,7 @@ func (d *PostgreSQL) AppointmentUpsert (
 			appointment.PublicKey,         // $8
 		)
 		if err != nil {
-			services.Log.Debug("psql query failed: ", err)
+			services.Log.Debugf("psql query failed:\n%#v\n", err)
 			return err
 		}
 
@@ -411,7 +440,7 @@ func (d *PostgreSQL) AppointmentUpsert (
 				toBase64(appointment.Data.ID), // $2
 			)
 			if err != nil {
-				services.Log.Debug("psql query failed: ", err)
+				services.Log.Debugf("psql query failed:\n%#v\n", err)
 				return err
 			}
 		}
@@ -423,7 +452,7 @@ func (d *PostgreSQL) AppointmentUpsert (
 				toBase64(appointment.Data.ID), // $3
 			)
 			if err != nil {
-				services.Log.Debugf("psql query failed: %#v", err)
+				services.Log.Debugf("psql query failed:\n%#v\n", err)
 				return err
 			}
 		}
@@ -477,7 +506,7 @@ func (d *PostgreSQL) MediatorKeysGetAll () ([]*services.ActorKey, error) {
 	res, err := d.pool.Query(d.ctx, sqlStr)
 	defer res.Close()
 	if err != nil {
-		services.Log.Debug("psql query failed: ", err)
+		services.Log.Debugf("psql query failed:\n%#v\n", err)
 		return nil, err
 	}
 
@@ -514,7 +543,7 @@ func (d *PostgreSQL) MediatorUpsert (key *services.ActorKey) error {
 		key.PublicKey,    // $4
 	)
 
-	if err != nil { services.Log.Debug("psql query failed: ", err) }
+	if err != nil { services.Log.Debugf("psql query failed:\n%#v\n", err) }
 	return err
 }
 
@@ -549,7 +578,7 @@ func rowToSqlProvider (row pgx.Row) (*services.SqlProvider, error) {
 	)
 
 	if err != nil {
-		services.Log.Debug("psql query failed: ", err)
+		services.Log.Debugf("psql query failed:\n%#v\n", err)
 		return nil, err
 	}
 
@@ -604,7 +633,7 @@ func (d *PostgreSQL) ProviderGetByID(
 		if err == pgx.ErrNoRows {
 			return nil, NotFound
 		} else {
-			services.Log.Debug("psql query failed: ", err)
+			services.Log.Debugf("psql query failed:\n%#v\n", err)
 			return nil, err
 		}
 	} else {
@@ -627,7 +656,7 @@ func (d *PostgreSQL) ProviderGetAll(
 	res, err := d.pool.Query(d.ctx, sqlStr)
 	defer res.Close()
 	if err != nil {
-		services.Log.Debug("psql query failed: ", err)
+		services.Log.Debugf("psql query failed:\n%#v\n", err)
 		return nil, err
 	}
 
@@ -636,7 +665,7 @@ func (d *PostgreSQL) ProviderGetAll(
 		p, err := rowToSqlProvider(res)
 		providers = append(providers, p)
 		if err != nil {
-			services.Log.Debug("psql query failed: ", err)
+			services.Log.Debugf("psql query failed:\n%#v\n", err)
 			return nil, err
 		}
 	}
@@ -658,7 +687,7 @@ func (d *PostgreSQL) ProviderGetPublicByZip(
 	res, err := d.pool.Query(d.ctx, sqlStr, zipFrom, zipTo)
 	defer res.Close()
 	if err != nil {
-		services.Log.Debug("psql query failed: ", err)
+		services.Log.Debugf("psql query failed:\n%#v\n", err)
 		return nil, err
 	}
 
@@ -667,7 +696,7 @@ func (d *PostgreSQL) ProviderGetPublicByZip(
 		p, err := rowToSqlProvider(res)
 		providers = append(providers, p)
 		if err != nil {
-			services.Log.Debug("psql query failed: ", err)
+			services.Log.Debugf("psql query failed:\n%#v\n", err)
 			return nil, err
 		}
 	}
@@ -698,7 +727,7 @@ func (d *PostgreSQL) ProviderKeyGetByID (
 		if err == pgx.ErrNoRows {
 			return nil, NotFound
 		} else {
-			services.Log.Debug("psql query failed: ", err)
+			services.Log.Debugf("psql query failed:\n%#v\n", err)
 			return nil, err
 		}
 	}
@@ -717,7 +746,7 @@ func (d *PostgreSQL) ProviderKeysGetAll () ([]*services.ActorKey, error) {
 	res, err := d.pool.Query(d.ctx, sqlStr)
 	defer res.Close()
 	if err != nil {
-		services.Log.Debug("psql query failed: ", err)
+		services.Log.Debugf("psql query failed:\n%#v\n", err)
 		return nil, err
 	}
 
@@ -745,7 +774,7 @@ func (d *PostgreSQL) ProviderPublishData (
 			SET "unverified_data" = EXCLUDED."unverified_data", "updated_at" = NOW()
 	`
 	_, err := d.pool.Exec(d.ctx, sqlStr, toBase64(data.ID), data)
-	if err != nil { services.Log.Debug("psql query failed: ", err) }
+	if err != nil { services.Log.Debugf("psql query failed:\n%#v\n", err) }
 	return err
 }
 
@@ -787,7 +816,7 @@ func (d *PostgreSQL) ProviderVerify (
 		key.Signature,               // $11
 		key.PublicKey,               // $12
 	)
-	if err != nil { services.Log.Debug("psql query failed: ", err) }
+	if err != nil { services.Log.Debugf("psql query failed:\n%#v\n", err) }
 	return err
 }
 
@@ -795,7 +824,7 @@ func (d *PostgreSQL) ProviderVerify (
 func (d *PostgreSQL) SettingsDelete (id string) error {
 	sqlStr := `DELETE FROM "storage" WHERE "storage_id" = $1`
 	_, err := d.pool.Exec(d.ctx, sqlStr, id)
-	if err != nil { services.Log.Debug("psql query failed: ", err) }
+	if err != nil { services.Log.Debugf("psql query failed:\n%#v\n", err) }
 	return err
 }
 
@@ -809,7 +838,7 @@ func (d *PostgreSQL) SettingsGet (id string) ([]byte, error) {
 		if err == pgx.ErrNoRows {
 			return nil, NotFound
 		} else {
-			services.Log.Debug("psql query failed: ", err)
+			services.Log.Debugf("psql query failed:\n%#v\n", err)
 			return nil, err
 		}
 	}
@@ -820,7 +849,7 @@ func (d *PostgreSQL) SettingsGet (id string) ([]byte, error) {
 func (d *PostgreSQL) SettingsReset () error {
 	sqlStr := `DELETE FROM "storage"`
 	_, err := d.pool.Exec(d.ctx, sqlStr)
-	if err != nil { services.Log.Debug("psql query failed: ", err) }
+	if err != nil { services.Log.Debugf("psql query failed:\n%#v\n", err) }
 	return err
 }
 
@@ -831,7 +860,7 @@ func (d *PostgreSQL) SettingsUpsert (id string, data []byte) error {
 			SET data = EXCLUDED."data", "updated_at" = NOW(), "accessed_at" = NOW()
 	`
 	_, err := d.pool.Exec(d.ctx, sqlStr, id, data)
-	if err != nil { services.Log.Debug("psql query failed: ", err) }
+	if err != nil { services.Log.Debugf("psql query failed:\n%#v\n", err) }
 	return err
 }
 
@@ -844,7 +873,7 @@ func (d *PostgreSQL) TokenPrimaryAdd (n int64) (int64, error) {
 	var newN int64
 
 	if err := d.pool.QueryRow(d.ctx, sqlStr, n).Scan(&newN); err != nil {
-		services.Log.Debug("psql query failed: ", err)
+		services.Log.Debugf("psql query failed:\n%#v\n", err)
 		return math.MaxInt64, err
 	}
 
@@ -868,7 +897,7 @@ func (d *PostgreSQL) TokenUserAdd (userID []byte, n int64) (int64, error) {
 		n,
 	).Scan(&newN); err != nil {
 
-		services.Log.Debug("psql query failed: ", err)
+		services.Log.Debugf("psql query failed:\n%#v\n", err)
 		return math.MaxInt64, err
 	}
 

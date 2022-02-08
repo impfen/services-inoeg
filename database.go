@@ -37,8 +37,9 @@ type DatabaseMaker func(settings interface{}) (Database, error)
 type DatabaseOps interface {
 	AppointmentsReset() error
 	AppointmentBook([]byte, []byte, []byte, []byte, *crypto.ECDHEncryptedData) ([]byte, error)
-	AppointmentUpsert([]byte, []*SignedAppointment) error
+	AppointmentCancel([]byte, []byte) error
 	AppointmentGet([]byte, []byte) (*SignedAppointment, error)
+	AppointmentUpsert([]byte, []*SignedAppointment) error
 	AppointmentsGetByProperty([]byte, string, string) ([]*SignedAppointment, error)
 	AppointmentsGetByDateRange([]byte, time.Time, time.Time) ([]*SignedAppointment, error)
 	MediatorKeyFind([]byte) (*ActorKey, error)

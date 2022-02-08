@@ -32,6 +32,8 @@ type AppointmentsBackend struct {
 	db services.Database
 }
 
+// Appointments
+
 func (a *AppointmentsBackend) bookAppointment(
 	providerID []byte,
 	appointmentID []byte,
@@ -48,11 +50,11 @@ func (a *AppointmentsBackend) bookAppointment(
 	)
 }
 
-func (a *AppointmentsBackend) upsertAppointment(
-	providerID []byte,
-	appointment []*services.SignedAppointment,
+func (a *AppointmentsBackend) cancelAppointment(
+	appointmentID []byte,
+	token []byte,
 ) error {
-	return a.db.AppointmentUpsert(providerID, appointment)
+	return a.db.AppointmentCancel(appointmentID, token)
 }
 
 func (a *AppointmentsBackend) getAppointment(
@@ -78,6 +80,15 @@ func (a *AppointmentsBackend) getAppointmentsByProperty(
 	return a.db.AppointmentsGetByProperty(providerID, key, val)
 }
 
+func (a *AppointmentsBackend) upsertAppointment(
+	providerID []byte,
+	appointment []*services.SignedAppointment,
+) error {
+	return a.db.AppointmentUpsert(providerID, appointment)
+}
+
+// Mediators
+
 func (a *AppointmentsBackend) findMediatorKey(
 	id []byte,
 ) (*services.ActorKey, error) {
@@ -91,6 +102,8 @@ func (a *AppointmentsBackend) getMediatorKeys() ([]*services.ActorKey, error) {
 func (a *AppointmentsBackend) setMediatorKey(key *services.ActorKey) error {
 	return a.db.MediatorUpsert(key)
 }
+
+// Providers
 
 func (a *AppointmentsBackend) getVerifiedProviders (
 ) ([]*services.RawProviderData, error) {
@@ -204,6 +217,8 @@ func (a *AppointmentsBackend) verifyProvider(
 	return a.db.ProviderVerify(key, confirmedData, publicData)
 }
 
+// Tokens
+
 func (a *AppointmentsBackend) primaryTokenAdd (n int64) (int64, error) {
 	return a.db.TokenPrimaryAdd(n)
 }
@@ -216,6 +231,7 @@ func (a *AppointmentsBackend) userTokenAdd (
 }
 
 // legacy
+
 func (a *AppointmentsBackend) Neighbors(neighborType, zipCode string) *Neighbors {
 	return nil
 }

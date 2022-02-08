@@ -19,9 +19,7 @@
 package servers
 
 import (
-	"bytes"
 	"github.com/kiebitz-oss/services"
-	"time"
 )
 
 func (c *Appointments) cancelAppointment(
@@ -35,75 +33,15 @@ func (c *Appointments) cancelAppointment(
 		PublicKey: params.PublicKey,
 		ExtraData: params.Data.SignedTokenData,
 		Timestamp: params.Data.Timestamp,
-	}); resp != nil {
-		return resp
-	}
+	}); resp != nil { return resp }
 
-	appointmentDatesByID := c.backend.AppointmentDatesByID(params.Data.ProviderID)
-
-	if date, err := appointmentDatesByID.Get(params.Data.ID); err != nil {
-		services.Log.Errorf("Cannot get appointment by ID: %v", err)
+	err := c.backend.cancelAppointment(
+		params.Data.ID,
+		params.Data.SignedTokenData.Data.Token,
+	)
+	if err != nil {
+		services.Log.Error(err)
 		return context.InternalError()
-	} else {
-
-		appointmentsByDate := c.backend.AppointmentsByDate(
-			params.Data.ProviderID,
-			date,
-		)
-
-		// lock the appointment before attempting to retreive it
-		lock, err := c.LockAppointment(params.Data.ID)
-		if err != nil {
-			services.Log.Error(err)
-			return LockError(context)
-		}
-		defer lock.Release()
-
-		if signedAppointment, err := appointmentsByDate.Get(
-			c.settings.Validate,
-			params.Data.ID,
-		); err != nil {
-
-			services.Log.Errorf("Cannot get appointment by date: %v", err)
-			return context.InternalError()
-
-		} else {
-			newBookings := make([]*services.Booking, 0)
-			token := params.Data.SignedTokenData.Data.Token
-
-			found := false
-			for _, booking := range signedAppointment.Bookings {
-				if bytes.Equal(booking.Token, token) {
-					found = true
-					continue
-				}
-				newBookings = append(newBookings, booking)
-			}
-
-			if !found {
-				return context.NotFound()
-			}
-
-			signedAppointment.Bookings = newBookings
-
-			usedTokens := c.backend.UsedTokens()
-
-			// we mark the token as unused
-			if err := usedTokens.Del(token); err != nil {
-				services.Log.Error(err)
-				return context.InternalError()
-			}
-
-			signedAppointment.UpdatedAt = time.Now()
-
-			// we update the appointment
-			if err := appointmentsByDate.Set(signedAppointment); err != nil {
-				services.Log.Error(err)
-				return context.InternalError()
-			}
-
-		}
-
 	}
 
 	return context.Acknowledge()

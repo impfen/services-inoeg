@@ -40,6 +40,15 @@ func (c *Appointments) getAppointment(
 		return context.InternalError()
 	}
 
+	// remove booking information
+	for _, slot := range signedAppointment.Bookings {
+		signedAppointment.BookedSlots = append(
+			signedAppointment.BookedSlots,
+			&services.Slot{ID: slot.ID},
+		)
+	}
+	signedAppointment.Bookings = nil
+
 	providerKey, err := c.backend.getProviderKeyByID(params.ProviderID)
 	if err != nil {
 		services.Log.Error(err)
