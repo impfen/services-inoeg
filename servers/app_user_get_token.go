@@ -24,9 +24,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/kiebitz-oss/services"
-	"github.com/kiebitz-oss/services/crypto"
-	"github.com/kiebitz-oss/services/databases"
+	"github.com/impfen/services-inoeg"
+	"github.com/impfen/services-inoeg/crypto"
+	"github.com/impfen/services-inoeg/databases"
 )
 
 /* Generates an HMAC based priority token and associated data structure. As the

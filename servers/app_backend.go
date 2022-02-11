@@ -21,8 +21,8 @@ package servers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kiebitz-oss/services"
-	"github.com/kiebitz-oss/services/forms"
+	"github.com/impfen/services-inoeg"
+	"github.com/impfen/services-inoeg/forms"
 	"time"
 )
 

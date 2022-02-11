@@ -19,11 +19,11 @@
 package servers_test
 
 import (
-	"github.com/kiebitz-oss/services"
-	"github.com/kiebitz-oss/services/definitions"
-	"github.com/kiebitz-oss/services/helpers"
-	at "github.com/kiebitz-oss/services/testing"
-	af "github.com/kiebitz-oss/services/testing/fixtures"
+	"github.com/impfen/services-inoeg"
+	"github.com/impfen/services-inoeg/definitions"
+	"github.com/impfen/services-inoeg/helpers"
+	at "github.com/impfen/services-inoeg/testing"
+	af "github.com/impfen/services-inoeg/testing/fixtures"
 	"testing"
 )
 

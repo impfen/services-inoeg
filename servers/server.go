@@ -20,11 +20,11 @@ package servers
 
 import (
 	"fmt"
-	"github.com/kiebitz-oss/services"
-	"github.com/kiebitz-oss/services/api"
-	"github.com/kiebitz-oss/services/http"
-	"github.com/kiebitz-oss/services/jsonrpc"
-	"github.com/kiebitz-oss/services/rest"
+	"github.com/impfen/services-inoeg"
+	"github.com/impfen/services-inoeg/api"
+	"github.com/impfen/services-inoeg/http"
+	"github.com/impfen/services-inoeg/jsonrpc"
+	"github.com/impfen/services-inoeg/rest"
 )
 
 type Server struct {

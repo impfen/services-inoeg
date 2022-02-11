@@ -20,7 +20,7 @@ package servers
 
 import (
 	"bytes"
-	"github.com/kiebitz-oss/services"
+	"github.com/impfen/services-inoeg"
 	"time"
 )
 

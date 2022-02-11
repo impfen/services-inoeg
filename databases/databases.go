@@ -19,7 +19,7 @@
 package databases
 
 import (
-	"github.com/kiebitz-oss/services"
+	"github.com/impfen/services-inoeg"
 )
 
 var Databases = services.DatabaseDefinitions{

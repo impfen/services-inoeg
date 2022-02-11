@@ -21,8 +21,8 @@ package servers
 import (
 	"bytes"
 	//"encoding/hex"
-	"github.com/kiebitz-oss/services"
-	"github.com/kiebitz-oss/services/crypto"
+	"github.com/impfen/services-inoeg"
+	"github.com/impfen/services-inoeg/crypto"
 	"time"
 )
 

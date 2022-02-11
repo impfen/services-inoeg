@@ -19,8 +19,8 @@
 package helpers
 
 import (
-	"github.com/kiebitz-oss/services"
-	"github.com/kiebitz-oss/services/servers"
+	"github.com/impfen/services-inoeg"
+	"github.com/impfen/services-inoeg/servers"
 )
 
 func InitializeStorageServer(settings *services.Settings) (*servers.Storage, error) {

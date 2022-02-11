@@ -22,9 +22,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/kiebitz-oss/services"
-	"github.com/kiebitz-oss/services/crypto"
-	"github.com/kiebitz-oss/services/http"
+	"github.com/impfen/services-inoeg"
+	"github.com/impfen/services-inoeg/crypto"
+	"github.com/impfen/services-inoeg/http"
 	"regexp"
 	"strings"
 )

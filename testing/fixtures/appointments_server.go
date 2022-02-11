@@ -20,9 +20,9 @@ package fixtures
 
 import (
 	"fmt"
-	"github.com/kiebitz-oss/services"
-	"github.com/kiebitz-oss/services/helpers"
-	"github.com/kiebitz-oss/services/servers"
+	"github.com/impfen/services-inoeg"
+	"github.com/impfen/services-inoeg/helpers"
+	"github.com/impfen/services-inoeg/servers"
 )
 
 type AppointmentsServer struct {

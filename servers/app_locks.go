@@ -20,7 +20,7 @@ package servers
 
 import (
 	"encoding/base64"
-	"github.com/kiebitz-oss/services"
+	"github.com/impfen/services-inoeg"
 )
 
 func toBase64 (bytes []byte) string {

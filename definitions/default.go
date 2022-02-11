@@ -19,10 +19,10 @@
 package definitions
 
 import (
-	"github.com/kiebitz-oss/services"
-	"github.com/kiebitz-oss/services/cmd"
-	"github.com/kiebitz-oss/services/databases"
-	"github.com/kiebitz-oss/services/meters"
+	"github.com/impfen/services-inoeg"
+	"github.com/impfen/services-inoeg/cmd"
+	"github.com/impfen/services-inoeg/databases"
+	"github.com/impfen/services-inoeg/meters"
 )
 
 var Default = services.Definitions{

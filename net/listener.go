@@ -20,7 +20,7 @@ package net
 
 import (
 	"fmt"
-	"github.com/kiebitz-oss/services"
+	"github.com/impfen/services-inoeg"
 	"net"
 	"sync"
 	"time"

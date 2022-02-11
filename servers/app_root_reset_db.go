@@ -19,7 +19,7 @@
 package servers
 
 import (
-	"github.com/kiebitz-oss/services"
+	"github.com/impfen/services-inoeg"
 )
 
 func (a *Appointments) resetDB(context services.Context, params *services.ResetDBSignedParams) services.Response {

@@ -19,9 +19,9 @@
 package servers_test
 
 import (
-	"github.com/kiebitz-oss/services/definitions"
-	at "github.com/kiebitz-oss/services/testing"
-	af "github.com/kiebitz-oss/services/testing/fixtures"
+	"github.com/impfen/services-inoeg/definitions"
+	at "github.com/impfen/services-inoeg/testing"
+	af "github.com/impfen/services-inoeg/testing/fixtures"
 	"testing"
 )
 

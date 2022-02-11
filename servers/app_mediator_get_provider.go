@@ -19,8 +19,8 @@
 package servers
 
 import (
-	"github.com/kiebitz-oss/services"
-	"github.com/kiebitz-oss/services/databases"
+	"github.com/impfen/services-inoeg"
+	"github.com/impfen/services-inoeg/databases"
 )
 
 // mediator-only endpoint

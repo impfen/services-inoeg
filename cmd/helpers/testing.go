@@ -20,9 +20,9 @@ package helpers
 
 import (
 	"fmt"
-	"github.com/kiebitz-oss/services"
-	at "github.com/kiebitz-oss/services/testing"
-	af "github.com/kiebitz-oss/services/testing/fixtures"
+	"github.com/impfen/services-inoeg"
+	at "github.com/impfen/services-inoeg/testing"
+	af "github.com/impfen/services-inoeg/testing/fixtures"
 	"github.com/urfave/cli"
 )
 

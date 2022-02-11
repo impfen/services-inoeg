@@ -1,4 +1,4 @@
-module github.com/kiebitz-oss/services
+module github.com/impfen/services-inoeg
 
 go 1.16
 

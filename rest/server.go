@@ -20,9 +20,9 @@ package rest
 
 import (
 	"fmt"
-	"github.com/kiebitz-oss/services"
-	"github.com/kiebitz-oss/services/http"
-	"github.com/kiebitz-oss/services/jsonrpc"
+	"github.com/impfen/services-inoeg"
+	"github.com/impfen/services-inoeg/http"
+	"github.com/impfen/services-inoeg/jsonrpc"
 	"github.com/prometheus/client_golang/prometheus"
 	"strconv"
 	"time"
