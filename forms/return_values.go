@@ -146,6 +146,10 @@ var IsBooleanRVV = []forms.Validator{
 	forms.IsBoolean{},
 }
 
+var IsStringRVV = []forms.Validator{
+	forms.IsString{},
+}
+
 var GetStatsRVV = []forms.Validator{
 	forms.IsList{
 		Validators: []forms.Validator{

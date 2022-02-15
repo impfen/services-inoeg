@@ -372,6 +372,19 @@ func MakeAppointments(settings *services.Settings) (*Appointments, error) {
 				},
 			},
 			{
+				Name:        "checkProviderStatus", // authenticated (provider)
+				Description: "returns the current status of the provider",
+				Form:        &forms.SignedTimestampForm,
+				Handler:     appointments.isValidProvider,
+				ReturnType:  &api.ReturnType{
+					Validators: forms.IsStringRVV,
+				},
+				REST: &api.REST{
+					Path:   "provider/status",
+					Method: api.POST,
+				},
+			},
+			{
 				Name:        "bookAppointment", // authenticated (user)
 				Description: "Books an appointment.",
 				Form:        &forms.BookAppointmentForm,
