@@ -51,14 +51,15 @@ func (c *Appointments) storeProviderData(
 
 	// TODO: add one-time use check
 
-	providerId := crypto.Hash(params.PublicKey)
+	providerID := crypto.Hash(params.PublicKey)
 
 	verifiedProviderData := c.backend.VerifiedProviderData()
 	providerData := c.backend.UnverifiedProviderData()
+	providerStatus := c.backend.ProviderStatus()
 	codes := c.backend.Codes("provider")
 
 	existingData := false
-	if result, err := verifiedProviderData.Get(providerId); err != nil {
+	if result, err := verifiedProviderData.Get(providerID); err != nil {
 		if err != databases.NotFound {
 			services.Log.Error(err)
 			return context.InternalError()
@@ -80,7 +81,7 @@ func (c *Appointments) storeProviderData(
 	}
 
 	// aquire a lock before writing new data
-	lock, err := c.LockProvider(providerId)
+	lock, err := c.LockProvider(providerID)
 	if err != nil {
 		services.Log.Error(err)
 		return LockError(context)
@@ -88,13 +89,19 @@ func (c *Appointments) storeProviderData(
 	defer lock.Release()
 
 	rawProviderData := &services.RawProviderData{
-		ID: providerId,
+		ID: providerID,
 		EncryptedData: params.Data.EncryptedData,
 	}
 
-	if err := providerData.Set(providerId, rawProviderData); err != nil {
+	if err := providerData.Set(providerID, rawProviderData); err != nil {
 		services.Log.Error(err)
 		return context.InternalError()
+	}
+
+	if existingData {
+		providerStatus.Set(providerID, "CHANGED")
+	} else {
+		providerStatus.Set(providerID, "UNVERIFIED")
 	}
 
 	// we delete the provider code

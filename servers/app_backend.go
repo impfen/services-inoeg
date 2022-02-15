@@ -58,6 +58,12 @@ func (a *AppointmentsBackend) Codes(actor string) *Codes {
 	}
 }
 
+func (a *AppointmentsBackend) ProviderStatus() *ProviderStatus {
+	return &ProviderStatus{
+		dbs: a.db.Map("status", []byte("provider")),
+	}
+}
+
 func (a *AppointmentsBackend) PublicProviderData() *PublicProviderData {
 	return &PublicProviderData{
 		dbs: a.db.Map("providerData", []byte("public")),
@@ -388,6 +394,32 @@ func (a *AppointmentDatesByProperty) Set(appId []byte, date string) error {
 
 func (a *AppointmentDatesByProperty) Del(id []byte) error {
 	return a.dbs.Del(id)
+}
+
+type ProviderStatus struct {
+	dbs services.Map
+}
+
+func (p *ProviderStatus) Get(id []byte) (string, error) {
+
+	data, err := p.dbs.Get(id)
+	if err != nil {
+		return "", err
+	}
+
+	strData := string(data)
+
+	if strData == "VERIFIED_FIRST" {
+		if err := p.Set(id, "VERIFIED"); err != nil{
+			return "", err
+		}
+	}
+
+	return strData, nil
+}
+
+func (p *ProviderStatus) Set(id []byte, data string) error {
+	return p.dbs.Set(id, []byte(data))
 }
 
 type PublicProviderData struct {

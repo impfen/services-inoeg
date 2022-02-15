@@ -41,15 +41,16 @@ func (c *Appointments) confirmProvider(
 		return resp
 	}
 
-	providerId := crypto.Hash(params.Data.SignedKeyData.Data.Signing)
+	providerID := crypto.Hash(params.Data.SignedKeyData.Data.Signing)
 
-	lock, err := c.LockProvider(providerId)
+	lock, err := c.LockProvider(providerID)
 	if err != nil {
 		services.Log.Error(err)
 		return LockError(context)
 	}
 	defer lock.Release()
 
+	// update/set provider key
 	keys := c.backend.Keys("providers")
 
 	providerKey := &services.ActorKey{
@@ -58,22 +59,23 @@ func (c *Appointments) confirmProvider(
 		PublicKey: params.Data.SignedKeyData.PublicKey,
 	}
 
-	if err := keys.Set(providerId, providerKey); err != nil {
+	if err := keys.Set(providerID, providerKey); err != nil {
 		services.Log.Error(err)
 		return context.InternalError()
 	}
 
+	// update provider data
 	unverifiedProviderData := c.backend.UnverifiedProviderData()
 	verifiedProviderData := c.backend.VerifiedProviderData()
 	confirmedProviderData := c.backend.ConfirmedProviderData()
 	publicProviderData := c.backend.PublicProviderData()
 
-	oldPd, err := unverifiedProviderData.Get(providerId)
+	oldPd, err := unverifiedProviderData.Get(providerID)
 
 	if err != nil {
 		if err == databases.NotFound {
 			// maybe this provider has already been verified before...
-			if oldPd, err = verifiedProviderData.Get(providerId); err != nil {
+			if oldPd, err = verifiedProviderData.Get(providerID); err != nil {
 				if err == databases.NotFound {
 					return context.NotFound()
 				} else {
@@ -87,21 +89,21 @@ func (c *Appointments) confirmProvider(
 		}
 	}
 
-	if err := unverifiedProviderData.Del(providerId); err != nil {
+	if err := unverifiedProviderData.Del(providerID); err != nil {
 		if err != databases.NotFound {
 			services.Log.Error(err)
 			return context.InternalError()
 		}
 	}
 
-	if err := verifiedProviderData.Set(providerId, oldPd); err != nil {
+	if err := verifiedProviderData.Set(providerID, oldPd); err != nil {
 		services.Log.Error(err)
 		return context.InternalError()
 	}
 
 	// we store a copy of the encrypted data for the provider to check
 	if err := confirmedProviderData.Set(
-		providerId,
+		providerID,
 		params.Data.ConfirmedProviderData,
 	); err != nil {
 		services.Log.Error(err)
@@ -110,9 +112,25 @@ func (c *Appointments) confirmProvider(
 
 	if params.Data.PublicProviderData != nil {
 		if err := publicProviderData.Set(
-			providerId,
+			providerID,
 			params.Data.PublicProviderData,
 		); err != nil {
+			services.Log.Error(err)
+			return context.InternalError()
+		}
+	}
+
+	// update provider status
+	providerStatus := c.backend.ProviderStatus()
+	oldStat, err := providerStatus.Get(providerID)
+	if err != nil || oldStat == "UNVERIFIED" {
+		// when in doubt set this status
+		if err := providerStatus.Set(providerID, "VERIFIED_FIRST"); err != nil {
+			services.Log.Error(err)
+			return context.InternalError()
+		}
+	} else {
+		if err := providerStatus.Set(providerID, "VERIFIED"); err != nil {
 			services.Log.Error(err)
 			return context.InternalError()
 		}
