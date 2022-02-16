@@ -375,7 +375,7 @@ func MakeAppointments(settings *services.Settings) (*Appointments, error) {
 				Name:        "checkProviderStatus", // authenticated (provider)
 				Description: "returns the current status of the provider",
 				Form:        &forms.SignedTimestampForm,
-				Handler:     appointments.isValidProvider,
+				Handler:     appointments.checkProviderStatus,
 				ReturnType:  &api.ReturnType{
 					Validators: forms.IsStringRVV,
 				},
