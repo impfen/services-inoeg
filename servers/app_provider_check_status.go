@@ -29,15 +29,22 @@ func (c *Appointments) checkProviderStatus(
 	params *services.CheckProviderDataSignedParams,
 ) services.Response {
 
-	resp, _ := c.isProvider(context, &services.SignedParams{
+	validatedErr, _ := c.isProvider(context, &services.SignedParams{
 		JSON:      params.JSON,
 		Signature: params.Signature,
 		PublicKey: params.PublicKey,
 		Timestamp: params.Data.Timestamp,
 	})
 
-	if resp != nil {
-		return resp
+	pendingErr := c.isPendingProvider(context, &services.SignedParams{
+		JSON:      params.JSON,
+		Signature: params.Signature,
+		PublicKey: params.PublicKey,
+		Timestamp: params.Data.Timestamp,
+	})
+
+	if validatedErr != nil && pendingErr != nil{
+		return pendingErr
 	}
 
 	providerId := crypto.Hash(params.PublicKey)
