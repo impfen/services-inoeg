@@ -401,21 +401,11 @@ type ProviderStatus struct {
 }
 
 func (p *ProviderStatus) Get(id []byte) (string, error) {
-
 	data, err := p.dbs.Get(id)
 	if err != nil {
 		return "", err
 	}
-
-	strData := string(data)
-
-	if strData == "VERIFIED_FIRST" {
-		if err := p.Set(id, "VERIFIED"); err != nil{
-			return "", err
-		}
-	}
-
-	return strData, nil
+	return string(data), nil
 }
 
 func (p *ProviderStatus) Set(id []byte, data string) error {

@@ -28,7 +28,7 @@ import (
 // { limit }, keyPair
 func (c *Appointments) getPendingProviderData(
 	context services.Context,
-	params *services.GetPendingProviderDataSignedParams,
+	params *services.GetProvidersDataSignedParams,
 ) services.Response {
 
 	resp, _ := c.isMediator(context, &services.SignedParams{

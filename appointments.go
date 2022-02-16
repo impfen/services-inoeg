@@ -568,6 +568,7 @@ type StoreProviderDataParams struct {
 type RawProviderData struct {
 	ID            []byte                    `json:"id,omitempty"`
 	Verified      bool                      `json:"verified,omitempty"`
+	Status        string                    `json:"status,omitempty"`
 	EncryptedData *crypto.ECDHEncryptedData `json:"encryptedData"`
 }
 
@@ -590,30 +591,16 @@ type GetProviderResult struct {
 	VerifiedData   *RawProviderData `json:"verifiedData"`
 }
 
-// GetPendingProviderData
+// GetProvidersData
 
-type GetPendingProviderDataSignedParams struct {
-	JSON      string                        `json:"data" coerce:"name:json"`
-	Data      *GetPendingProviderDataParams `json:"-" coerce:"name:data"`
-	Signature []byte                        `json:"signature"`
-	PublicKey []byte                        `json:"publicKey"`
+type GetProvidersDataSignedParams struct {
+	JSON      string                  `json:"data" coerce:"name:json"`
+	Data      *GetProvidersDataParams `json:"-" coerce:"name:data"`
+	Signature []byte                  `json:"signature"`
+	PublicKey []byte                  `json:"publicKey"`
 }
 
-type GetPendingProviderDataParams struct {
-	Timestamp time.Time `json:"timestamp"`
-	Limit     int64     `json:"limit"`
-}
-
-// GetVerifiedProviderData
-
-type GetVerifiedProviderDataSignedParams struct {
-	JSON      string                         `json:"data" coerce:"name:json"`
-	Data      *GetVerifiedProviderDataParams `json:"-" coerce:"name:data"`
-	Signature []byte                         `json:"signature"`
-	PublicKey []byte                         `json:"publicKey"`
-}
-
-type GetVerifiedProviderDataParams struct {
+type GetProvidersDataParams struct {
 	Timestamp time.Time `json:"timestamp"`
 	Limit     int64     `json:"limit"`
 }

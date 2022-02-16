@@ -1193,38 +1193,13 @@ var GetProviderDataDataForm = forms.Form{
 	},
 }
 
-var GetPendingProviderDataForm = forms.Form{
-	Name:   "getPendingProviderData",
-	Fields: SignedDataFields(&GetPendingProviderDataDataForm),
+var GetProvidersDataForm = forms.Form{
+	Name:   "getProvidersData",
+	Fields: SignedDataFields(&GetProvidersDataDataForm),
 }
 
-var GetPendingProviderDataDataForm = forms.Form{
-	Name: "getPendingProviderDataData",
-	Fields: []forms.Field{
-		TimestampField,
-		{
-			Name:        "limit",
-			Description: "Number of entries to return at most.",
-			Validators: []forms.Validator{
-				forms.IsOptional{Default: 1000},
-				forms.IsInteger{
-					HasMin: true,
-					HasMax: true,
-					Min:    1,
-					Max:    10000,
-				},
-			},
-		},
-	},
-}
-
-var GetVerifiedProviderDataForm = forms.Form{
-	Name:   "getVerifiedProviderData",
-	Fields: SignedDataFields(&GetVerifiedProviderDataDataForm),
-}
-
-var GetVerifiedProviderDataDataForm = forms.Form{
-	Name: "getVerifiedProviderDataData",
+var GetProvidersDataDataForm = forms.Form{
+	Name: "getProvidersDataData",
 	Fields: []forms.Field{
 		TimestampField,
 		{

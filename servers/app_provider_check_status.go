@@ -47,16 +47,19 @@ func (c *Appointments) checkProviderStatus(
 		return pendingErr
 	}
 
-	providerId := crypto.Hash(params.PublicKey)
+	providerID := crypto.Hash(params.PublicKey)
 	providerStatus := c.backend.ProviderStatus()
 
-	if providerStatus, err := providerStatus.Get(providerId); err != nil {
+	if status, err := providerStatus.Get(providerID); err != nil {
 		if err == databases.NotFound {
 			return context.NotFound()
 		}
 		services.Log.Error(err)
 		return context.InternalError()
 	} else {
-		return context.Result(providerStatus)
+		if status == "VERIFIED_FIRST" {
+			providerStatus.Set(providerID, "VERIFIED")
+		}
+		return context.Result(status)
 	}
 }

@@ -26,7 +26,7 @@ import (
 
 // mediator-only endpoint
 // { limit }, keyPair
-func (c *Appointments) getVerifiedProviderData(
+func (c *Appointments) getProviders(
 	context services.Context,
 	params *services.GetProvidersDataSignedParams,
 ) services.Response {
@@ -37,25 +37,46 @@ func (c *Appointments) getVerifiedProviderData(
 		PublicKey: params.PublicKey,
 		Timestamp: params.Data.Timestamp,
 	})
+	if resp != nil { return resp }
 
-	if resp != nil {
-		return resp
-	}
+	providerStatus := c.backend.ProviderStatus()
+	pdEntries := []*services.RawProviderData{}
 
 	verifiedProviderData := c.backend.VerifiedProviderData()
-
-	providerDataMap, err := verifiedProviderData.GetAll()
-
+	verifiedProviderDataMap, err := verifiedProviderData.GetAll()
 	if err != nil {
 		services.Log.Error(err)
 		return context.InternalError()
 	}
 
-	pdEntries := []*services.RawProviderData{}
-
-	for pId, pd := range providerDataMap {
+	for pId, pd := range verifiedProviderDataMap {
 		pd.ID = []byte(pId)
 		pd.Verified = true
+		if status, err := providerStatus.Get([]byte(pId)); err != nil {
+			services.Log.Errorf("provider %s has no status %#v: ", pId, err)
+			pd.Status = "UNKNOWN"
+		} else {
+			pd.Status = status
+		}
+		pdEntries = append(pdEntries, pd)
+	}
+
+	unverifiedProviderData := c.backend.UnverifiedProviderData()
+	unverifiedproviderDataMap, err := unverifiedProviderData.GetAll()
+	if err != nil {
+		services.Log.Error(err)
+		return context.InternalError()
+	}
+
+	for pId, pd := range unverifiedproviderDataMap {
+		pd.ID = []byte(pId)
+		pd.Verified = false
+		if status, err := providerStatus.Get([]byte(pId)); err != nil {
+			services.Log.Errorf("provider %s has no status %#v: ", pId, err)
+			pd.Status = "UNKNOWN"
+		} else {
+			pd.Status = status
+		}
 		pdEntries = append(pdEntries, pd)
 	}
 
